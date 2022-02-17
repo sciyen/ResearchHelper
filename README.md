@@ -5,4 +5,4 @@ This is a front-end only web tool which retrieves library from your [Zotero](htt
 ## Quick start
 1. Register a private API key from [here](https://www.zotero.org/settings/keys/new).
 2. Lookup for your userID from [here](https://www.zotero.org/settings/keys).
-3. [Try it](https://sciyen.github.io/ResearchHelper/public/index.html)
+3. [Try it](https://sciyen.github.io/ResearchHelper/publics/index.html)
