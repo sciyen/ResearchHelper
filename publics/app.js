@@ -1,18 +1,17 @@
 // UMD bundle creates `ZoteroApiClient` global object
 const { default: api } = ZoteroApiClient;
 
-console.log("hello")
-console.log(api)
+const str_token = '::'
 
 /* get author information */
 function get_author(authors) {
     if (typeof authors === 'undefined' || authors.length <= 0)
         return "Unknown author"
     if (authors.length >= 3)
-        return authors[0].firstName + "_et.al."
+        return authors[0].lastName + " et.al."
     if (authors.length == 2)
-        return authors[0].firstName + "_&_" + authors[1].firstName
-    return authors[0].firstName;
+        return authors[0].lastName + " & " + authors[1].lastName
+    return authors[0].lastName;
 }
 
 /* get year information */
@@ -25,7 +24,15 @@ function get_year(date) {
         ele = date.split(',')
         return ele[ele.length - 1]
     }
+    if (date.includes('/')) {
+        return date.split('/')[0]
+    }
     return date
+}
+
+/* get details*/
+function get_details(collection_name, title) {
+    return collection_name + str_token + title
 }
 
 /* Retrieve library from Zotero API */
@@ -37,8 +44,9 @@ async function retreive(ApiKey, Uid) {
     console.log(collectionsRes)
     for (const c of collectionsRes.raw) {
         console.log(c)
+        collection_name = c.data.name
         div_collection = $("<div class='card-body'></div>")
-            .append($("<h5 class='card-title'></h5>").text(c.data.name))
+            .append($("<h5 class='card-title'></h5>").text(collection_name))
 
         const itemRes = await myapi.collections(c.key).items().get();
         const items = itemRes.getData();
@@ -46,16 +54,23 @@ async function retreive(ApiKey, Uid) {
 
         items.forEach(item => {
             if (item.itemType != "attachment") {
-                kname = '[' + item.key + ":" + get_author(item.creators) + "," + get_year(item.date) + ']'
+                number = (typeof item.callNumber === 'undefined') ? ('') : (String(item.callNumber))
                 div_item = $("<div></div>")
                     .append($("<h6></h6>").text(item.title))
-                    .append($("<p></p>").text(kname))
-                /*.append($("<p></p>").text(String(counter))
-                    .append($("<span></span>").text(":" + get_author(item.creators)))
-                    .append($("<span></span>").text("," + get_year(item.date))))*/
+                    .append($("<p></p>").text(number)
+                        .append($("<span></span>").text(": " + get_author(item.creators)))
+                        .append($("<span></span>").text(" " + get_year(item.date))))
                 div_collection.append(div_item)
-                kname = kname.replace(/[^a-zA-Z0-9.,&:\]\[]/g, "")
+
+                // Generate metadata for drawio plugin
+                kname = '[' + number + str_token
+                    + get_details(collection_name, item.title) + str_token
+                    + get_author(item.creators) + " "
+                    + get_year(item.date) + str_token
+                    + item.key + ']'
+                kname = kname.replace(/[^a-zA-Z0-9/.,&:\]\[]/g, "_")
                 $("#list").append($("<p></p>").text(kname))
+
                 counter += 1
             }
         })

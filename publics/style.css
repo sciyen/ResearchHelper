@@ -2,6 +2,14 @@
   background-color: #EEFFAA;
 }
 
+.card-body div p::before {
+  content: "[";
+}
+
+.card-body div p::after {
+  content: "]";
+}
+
 button {
   width: 100%;
 }
