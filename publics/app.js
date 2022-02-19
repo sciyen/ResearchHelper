@@ -9,9 +9,9 @@ function get_author(authors) {
     if (typeof authors === 'undefined' || authors.length <= 0)
         return "Unknown author"
     if (authors.length >= 3)
-        return authors[0].firstName + "_et.al."
+        return authors[0].firstName + " et.al."
     if (authors.length == 2)
-        return authors[0].firstName + "_&_" + authors[1].firstName
+        return authors[0].firstName + " & " + authors[1].firstName
     return authors[0].firstName;
 }
 
@@ -28,6 +28,11 @@ function get_year(date) {
     return date
 }
 
+/* get details*/
+function get_details(collection_name, title) {
+    return collection_name + '/' + title
+}
+
 /* Retrieve library from Zotero API */
 async function retreive(ApiKey, Uid) {
     counter = 1
@@ -37,8 +42,9 @@ async function retreive(ApiKey, Uid) {
     console.log(collectionsRes)
     for (const c of collectionsRes.raw) {
         console.log(c)
+        collection_name = c.data.name
         div_collection = $("<div class='card-body'></div>")
-            .append($("<h5 class='card-title'></h5>").text(c.data.name))
+            .append($("<h5 class='card-title'></h5>").text(collection_name))
 
         const itemRes = await myapi.collections(c.key).items().get();
         const items = itemRes.getData();
@@ -46,16 +52,21 @@ async function retreive(ApiKey, Uid) {
 
         items.forEach(item => {
             if (item.itemType != "attachment") {
-                kname = '[' + item.key + ":" + get_author(item.creators) + "," + get_year(item.date) + ']'
                 div_item = $("<div></div>")
                     .append($("<h6></h6>").text(item.title))
-                    .append($("<p></p>").text(kname))
-                /*.append($("<p></p>").text(String(counter))
-                    .append($("<span></span>").text(":" + get_author(item.creators)))
-                    .append($("<span></span>").text("," + get_year(item.date))))*/
+                    .append($("<p></p>").text(String(counter))
+                        .append($("<span></span>").text(": " + get_author(item.creators)))
+                        .append($("<span></span>").text(", " + get_year(item.date))))
                 div_collection.append(div_item)
-                kname = kname.replace(/[^a-zA-Z0-9.,&:\]\[]/g, "")
+
+                // Generate metadata for drawio plugin
+                kname = '[' + get_details(collection_name, item.title) + ":"
+                    + get_author(item.creators) + ","
+                    + get_year(item.date) + ':'
+                    + item.key + ']'
+                kname = kname.replace(/[^a-zA-Z0-9/.,&:\]\[]/g, "_")
                 $("#list").append($("<p></p>").text(kname))
+
                 counter += 1
             }
         })
