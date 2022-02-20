@@ -38,7 +38,9 @@ function get_details(collection_name, title) {
 /* Retrieve library from Zotero API */
 async function retreive(ApiKey, Uid) {
     counter = 1
-    const myapi = api(ApiKey).library('user', Uid);
+    const myapi = api(ApiKey, {
+        'limit': 100
+    }).library('user', Uid);
     const collectionsRes = await myapi.collections().get();
 
     console.log(collectionsRes)
@@ -68,7 +70,8 @@ async function retreive(ApiKey, Uid) {
                     + get_author(item.creators) + " "
                     + get_year(item.date) + str_token
                     + item.key + ']'
-                kname = kname.replace(/[^a-zA-Z0-9/.,&:\]\[]/g, "_")
+                // \u4e00-\u9fa5 is used to match Chinese character
+                kname = kname.replace(/[^a-zA-Z0-9/.,&:\]\[\u4e00-\u9fa5]/g, "_")
                 $("#list").append($("<p></p>").text(kname))
 
                 counter += 1
