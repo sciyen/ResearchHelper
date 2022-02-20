@@ -11,6 +11,7 @@ This is a front-end only web tool which retrieves library from your [Zotero](htt
 2. Lookup for your userID from [here](https://www.zotero.org/settings/keys).
 3. Follow the steps in [this](https://github.com/sciyen/ResearchHelper/tree/main/plugins) to permanently add a plugin to your diagrams.
 4. Obtain the citation list with [our tool](https://sciyen.github.io/ResearchHelper/publics/index.html) and copy to clipboard.
+    + Note, you can click `Manage your passwords` at the right end of the url bar after entering the `UID` and `API key` to save the keys to your account.
 5. Paste the citation list to the `Tags` dialog in diagrams.net.
     + You can open the dialog by clicking `View > Tags`, where you can see all the tags that you already have.
     + Click `add` button and paste the citation list.
