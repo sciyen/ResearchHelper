@@ -37,6 +37,7 @@ function get_details(collection_name, title) {
 async function retreive(ApiKey, Uid) {
     $("#zotero_token").empty()
     $('#copy').css('display', 'none')
+    $('#wait_msg').css('display', 'block')
     $("#references").empty()
     counter = 1
     drawio_token = ''
@@ -108,6 +109,7 @@ async function retreive(ApiKey, Uid) {
         $('#message').text("")
         $('#go').text("Refresh")
         $('#copy').css('display', 'block')
+        $('#wait_msg').css('display', 'none')
 
         navigator.clipboard.writeText(drawio_token).then(function () {
             $("#copy").text('Tokens copied!')

@@ -21,4 +21,33 @@ button {
 #copy {
   display: none;
 }
+
+#wait_msg {
+  background-color: #000;
+  opacity: 0.7;
+  width: 100%;
+  min-height: 100vh;
+  display: none;
+  position: fixed;
+  z-index: 99;
+}
+
+#wait_msg div {
+  position: fixed;
+  margin: auto;
+  width: 200px;
+  height: 200px;
+  top: 50%;
+  left: 50%;
+  -webkit-transform: translate(-50%, -50%);
+          transform: translate(-50%, -50%);
+  text-align: center;
+  background-color: #bbf;
+  border-radius: 50%;
+}
+
+#wait_msg div p {
+  margin-top: 80px;
+  color: #000;
+}
 /*# sourceMappingURL=style.css.map */
