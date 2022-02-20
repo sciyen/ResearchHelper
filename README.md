@@ -23,6 +23,5 @@ This is a front-end only web tool which retrieves library from your [Zotero](htt
 ## Get involved
 We are currently working on following subjects. Feel free to join us.
 - Developing the plugin for diagrams.net, please checkout to `feature/drawio_plugin` for more details
-- Copy the outputs to clipboard automatically
 - Unclassified documents will not shown in the tags. As mentioned in [#2](https://github.com/sciyen/ResearchHelper/issues/2).
 - The call number may be occupied by some useful information (usually in the literature of the book type), if it is used as a reference number field. As mentioned in [#2](https://github.com/sciyen/ResearchHelper/issues/2).

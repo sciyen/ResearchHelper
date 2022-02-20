@@ -13,4 +13,12 @@
 button {
   width: 100%;
 }
+
+#left_col {
+  overflow: hidden;
+}
+
+#copy {
+  display: none;
+}
 /*# sourceMappingURL=style.css.map */

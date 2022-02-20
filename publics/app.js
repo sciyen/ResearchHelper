@@ -16,8 +16,8 @@ function get_author(authors) {
 
 /* get year information */
 function get_year(date) {
-    function filter_year(tokens){
-        for (const t of tokens){
+    function filter_year(tokens) {
+        for (const t of tokens) {
             y = parseInt(t)
             if (!isNaN(y) && y > 50 && y < 10000)
                 return t
@@ -35,10 +35,14 @@ function get_details(collection_name, title) {
 
 /* Retrieve library from Zotero API */
 async function retreive(ApiKey, Uid) {
+    $("#zotero_token").empty()
+    $('#copy').css('display', 'none')
+    $("#references").empty()
     counter = 1
+    drawio_token = ''
     const myapi = api(ApiKey, {
         'limit': 100
-    }).library('user', Uid);
+    }).library('user', Uid)
     const collectionsRes = await myapi.collections().get();
 
     console.log(collectionsRes)
@@ -48,8 +52,8 @@ async function retreive(ApiKey, Uid) {
         div_collection = $("<div class='card-body'></div>")
             .append($("<h5 class='card-title'></h5>").text(collection_name))
 
-        const itemRes = await myapi.collections(c.key).items().get();
-        const items = itemRes.getData();
+        const itemRes = await myapi.collections(c.key).items().get()
+        const items = itemRes.getData()
         console.log(items)
 
         items.forEach(item => {
@@ -70,7 +74,7 @@ async function retreive(ApiKey, Uid) {
                     + item.key + ']'
                 // \u4e00-\u9fa5 is used to match Chinese character
                 kname = kname.replace(/[^a-zA-Z0-9/.,&:\]\[\u4e00-\u9fa5]/g, "_")
-                $("#list").append($("<p></p>").text(kname))
+                drawio_token += kname + ' '
 
                 counter += 1
             }
@@ -78,7 +82,16 @@ async function retreive(ApiKey, Uid) {
         $("#references").append($("<div class='card'></div>").append(div_collection))
         console.log(c.data.name)
     }
+    $("#zotero_token").append($("<p></p>").text(drawio_token))
     $('#message').text("")
+    $('#go').text("Refresh")
+    $('#copy').css('display', 'block')
+
+    navigator.clipboard.writeText(drawio_token).then(function () {
+        $("#copy").text('Tokens copied!')
+    }, function (err) {
+        $("#copy_err_msg").text('Copy the tokens')
+    });
 }
 
 $('#zotero_info').on('submit', (e) => {
@@ -97,4 +110,13 @@ $('#zotero_info').on('submit', (e) => {
     }
     else
         alert('Please enter your API key and UID!')
+})
+
+$('#copy').click(() => {
+    text = $("#zotero_token").text()
+    navigator.clipboard.writeText(drawio_token).then(function () {
+        $("#copy").text('Tokens copied!')
+    }, function (err) {
+        $("#copy_err_msg").text('Failed to copy')
+    });
 })
