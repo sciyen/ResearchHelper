@@ -2,6 +2,10 @@
 
 This is a front-end only web tool which retrieves library from your [Zotero](https://www.zotero.org/) personal account and organizes your references according to the collection in it. The outputs can be used to generate `tags` in [diagrams.net](http://diagrams.net/), which allow one to make citations with unique hash key.
 
+# The Website
+- [Our customized drawio](https://sciyen.github.io/drawio/src/main/webapp/index.html?p=zotero.js)
+- [The researcher helper](https://sciyen.github.io/ResearchHelper/publics/index.html)
+
 ## Quick start
 1. Register a private API key from [here](https://www.zotero.org/settings/keys/new).
 2. Lookup for your userID from [here](https://www.zotero.org/settings/keys).
