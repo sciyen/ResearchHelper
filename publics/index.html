@@ -14,27 +14,27 @@
     <div class="container">
         <div class="text-center">
             <h1>Research Helper</h1>
-            <p>For more information, please visits <a href="https://github.com/sciyen/ResearchHelper">github</a> page.
+            <p>For more information, please visits our <a href="https://github.com/sciyen/ResearchHelper">github</a> page.
             </p>
         </div>
 
         <div class="row">
             <div class="col"></div>
             <div class="col-8">
-                <form id="zotero_info">
+                <form method="POST" id="zotero_info">
                     <div class="input-group mb-3">
                         <div class="input-group-prepend">
-                            <span class="input-group-text">UID</span>
+                            <label for="input_uid" class="input-group-text">UID</label>
                         </div>
-                        <input id="input_uid" name="input_uid" type="number" class="form-control"
+                        <input id="input_uid" name="name" type="text" class="form-control"
                             placeholder="Paste your uid here" aria-label="Password" aria-describedby="basic-addon1"
                             autocomplete="username">
                     </div>
                     <div class="input-group mb-3">
                         <div class="input-group-prepend">
-                            <span class="input-group-text">API key</span>
+                            <label for="input_api_key" class="input-group-text">API key</label>
                         </div>
-                        <input id="input_api_key" name="input_api_key" type="password" class="form-control"
+                        <input id="input_api_key" name="api_key" type="password" class="form-control"
                             placeholder="Paste your key here" aria-label="Username" aria-describedby="basic-addon1"
                             autocomplete="current-password">
                     </div>
