@@ -45,53 +45,76 @@ async function retreive(ApiKey, Uid) {
     }).library('user', Uid)
     const collectionsRes = await myapi.collections().get();
 
+    collection_names = {}
+
     console.log(collectionsRes)
-    for (const c of collectionsRes.raw) {
+    promises = []
+
+    // Retrieve collection information
+    for (const [i, c] of collectionsRes.raw.entries()) {
         console.log(c)
-        collection_name = c.data.name
+        collection_names[c.key] = c.data.name
+        colleciton_id = 'collection_' + c.key
         div_collection = $("<div class='card-body'></div>")
-            .append($("<h5 class='card-title'></h5>").text(collection_name))
+            .attr('id', colleciton_id)
+            .append($("<h5 class='card-title'></h5>").text(c.data.name))
 
-        const itemRes = await myapi.collections(c.key).items().get()
-        const items = itemRes.getData()
-        console.log(items)
-
-        items.forEach(item => {
-            if (item.itemType != "attachment") {
-                number = (typeof item.callNumber === 'undefined') ? ('') : (String(item.callNumber))
-                div_item = $("<div></div>")
-                    .append($("<h6></h6>").text(item.title))
-                    .append($("<p></p>").text(number)
-                        .append($("<span></span>").text(": " + get_author(item.creators)))
-                        .append($("<span></span>").text(" " + get_year(item.date))))
-                div_collection.append(div_item)
-
-                // Generate metadata for drawio plugin
-                kname = '[' + number + str_token
-                    + get_details(collection_name, item.title) + str_token
-                    + get_author(item.creators) + " "
-                    + get_year(item.date) + str_token
-                    + item.key + ']'
-                // \u4e00-\u9fa5 is used to match Chinese character
-                kname = kname.replace(/[^a-zA-Z0-9/.,&:\]\[\u4e00-\u9fa5]/g, "_")
-                drawio_token += kname + ' '
-
-                counter += 1
-            }
-        })
+        // Add promises to request for the items in collection
+        promises.push(new Promise((resolve, reject) => {
+            const itemRes = myapi.collections(c.key).items().get()
+            resolve(itemRes)
+        }))
         $("#references").append($("<div class='card'></div>").append(div_collection))
         console.log(c.data.name)
     }
-    $("#zotero_token").append($("<p></p>").text(drawio_token))
-    $('#message').text("")
-    $('#go').text("Refresh")
-    $('#copy').css('display', 'block')
 
-    navigator.clipboard.writeText(drawio_token).then(function () {
-        $("#copy").text('Tokens copied!')
-    }, function (err) {
-        $("#copy_err_msg").text('Copy the tokens')
-    });
+    // Append the content when the data available
+    for (const p of promises) {
+        p.then((itemRes) => {
+            const items = itemRes.getData()
+            items.forEach(item => {
+                if (item.itemType != "attachment") {
+                    console.log(item)
+                    number = (typeof item.callNumber === 'undefined') ? ('') : (String(item.callNumber))
+                    div_item = $("<div></div>")
+                        .append($("<h6></h6>").text(item.title))
+                        .append($("<p></p>").text(number)
+                            .append($("<span></span>").text(": " + get_author(item.creators)))
+                            .append($("<span></span>").text(" " + get_year(item.date))))
+                    item.collections.forEach((ckey) => {
+                        collection_id = 'collection_' + ckey
+                        collection_name = collection_names[ckey]
+                        $('#' + collection_id).append(div_item)
+
+                        // Generate metadata for drawio plugin
+                        kname = '[' + number + str_token
+                            + get_details(collection_name, item.title) + str_token
+                            + get_author(item.creators) + " "
+                            + get_year(item.date) + str_token
+                            + item.key + ']'
+                        // \u4e00-\u9fa5 is used to match Chinese character
+                        kname = kname.replace(/[^a-zA-Z0-9/.,&:\]\[\u4e00-\u9fa5]/g, "_")
+                        drawio_token += kname + ' '
+                    })
+                    counter += 1
+                }
+            })
+        })
+    }
+
+    // Wait for all promise to finish no matter if it succeeded or rejected
+    Promise.allSettled(promises).then(([result]) => {
+        $("#zotero_token").append($("<p></p>").text(drawio_token))
+        $('#message').text("")
+        $('#go').text("Refresh")
+        $('#copy').css('display', 'block')
+
+        navigator.clipboard.writeText(drawio_token).then(function () {
+            $("#copy").text('Tokens copied!')
+        }, function (err) {
+            $("#copy_err_msg").text('Copy the tokens')
+        });
+    })
 }
 
 $('#zotero_info').on('submit', (e) => {
