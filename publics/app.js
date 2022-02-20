@@ -16,18 +16,16 @@ function get_author(authors) {
 
 /* get year information */
 function get_year(date) {
+    function filter_year(tokens){
+        for (const t of tokens){
+            y = parseInt(t)
+            if (!isNaN(y) && y > 50 && y < 10000)
+                return t
+        }
+    }
     if (typeof date === 'undefined' || date == "")
         return "Unknown year"
-    if (date.includes('-'))
-        return date.split('-')[0]
-    if (date.includes(',')) {
-        ele = date.split(',')
-        return ele[ele.length - 1]
-    }
-    if (date.includes('/')) {
-        return date.split('/')[0]
-    }
-    return date
+    return filter_year(date.split(/[-/,]/))
 }
 
 /* get details*/
