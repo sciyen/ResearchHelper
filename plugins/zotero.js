@@ -37,9 +37,9 @@ function get_details(collection_name, title) {
 }
 
 /* Retrieve library from Zotero API */
-async function retreive(ApiKey, Uid) {
+async function retreive(ApiKey, Uid, callback) {
     counter = 1
-    drawio_token = ''
+    drawio_tags = [];
     const myapi = zoteroApi(ApiKey, {
         'limit': 100
     }).library('user', Uid)
@@ -56,17 +56,12 @@ async function retreive(ApiKey, Uid) {
         for (const [i, c] of collectionsRes.raw.entries()) {
             console.log(c)
             collection_names[c.key] = c.data.name
-            // colleciton_id = 'collection_' + c.key
-            // div_collection = $("<div class='card-body'></div>")
-            //     .attr('id', colleciton_id)
-            //     .append($("<h5 class='card-title'></h5>").text(c.data.name))
 
             // Add promises to request for the items in collection
             promises.push(new Promise((resolve, reject) => {
                 const itemRes = myapi.collections(c.key).items().get()
                 resolve(itemRes)
             }))
-            // $("#references").append($("<div class='card'></div>").append(div_collection))
             console.log(c.data.name)
         }
 
@@ -78,15 +73,9 @@ async function retreive(ApiKey, Uid) {
                     if (item.itemType != "attachment") {
                         console.log(item)
                         number = (typeof item.callNumber === 'undefined') ? ('') : (String(item.callNumber))
-                        // div_item = $("<div></div>")
-                        //     .append($("<h6></h6>").text(item.title))
-                        //     .append($("<p></p>").text(number)
-                        //         .append($("<span></span>").text(": " + get_author(item.creators)))
-                        //         .append($("<span></span>").text(" " + get_year(item.date))))
+                        
                         item.collections.forEach((ckey) => {
-                            // collection_id = 'collection_' + ckey
                             collection_name = collection_names[ckey]
-                            // $('#' + collection_id).append(div_item)
 
                             // Generate metadata for drawio plugin
                             kname = '[' + number + str_token
@@ -96,7 +85,7 @@ async function retreive(ApiKey, Uid) {
                                 + item.key + ']'
                             // \u4e00-\u9fa5 is used to match Chinese character
                             kname = kname.replace(/[^a-zA-Z0-9/.,&:\]\[\u4e00-\u9fa5]/g, "_")
-                            drawio_token += kname + ' '
+                            drawio_tags.push(kname)
                         })
                         counter += 1
                     }
@@ -105,8 +94,8 @@ async function retreive(ApiKey, Uid) {
         }
 
         // Wait for all promise to finish no matter if it succeeded or rejected
-        Promise.allSettled(promises).then(([result]) => {
-            console.log("settled")
+        Promise.allSettled(promises).then((result) => {
+            callback(drawio_tags)
         })   
     }
     catch (err){
@@ -115,16 +104,49 @@ async function retreive(ApiKey, Uid) {
     }
 }
 
-script.onload = () => {
-zoteroApi = ZoteroApiClient.default;
-Draw.loadPlugin(function (ui) {
-    console.log(ui)
+function loadZoteroTags(ui) {
+    // disable button
+    let action = ui.actions.get('reloadZotero');
+    action.enabled = false;
+
+    // load from Zotero Api and add them to the list of tags (tags for the root)
     config = JSON.parse(localStorage.getItem(".configuration"));
     zotero_uid = parseInt(config['zotero_uid'], 10);
     zotero_api_key = config['zotero_api_key'];
-    console.log(config)
 
-    retreive(zotero_api_key, zotero_uid);
+    graph = ui.editor.graph;
+    root = graph.model.getRoot();
+
+    retreive(zotero_api_key, zotero_uid, (citations) => {
+        graph.addTagsForCells([root], citations)
+        action.enabled = true;
+    });
+}
+
+function setupZoretoMenu(ui) {
+    // Adds resource for action
+    mxResources.parse('reloadZotero=Reload Zotero...');
+
+    // Adds action
+    ui.actions.addAction('reloadZotero', () => {
+        loadZoteroTags(ui);
+    });
+
+    // Adds menu item for refreshing
+    let menu = ui.menus.get('extras');
+	let oldFunct = menu.funct;
+	
+	menu.funct = function(menu, parent)
+	{   
+        oldFunct.apply(this, arguments);
+        ui.menus.addMenuItems(menu, ['-', 'reloadZotero'], parent, );
+	};
+}
+
+script.onload = () => {
+zoteroApi = ZoteroApiClient.default;
+Draw.loadPlugin(function (ui) {
+    setupZoretoMenu(ui);
 
 	// Adds numbered toggle property
 	Editor.commonVertexProperties.push({
@@ -139,7 +161,6 @@ Draw.loadPlugin(function (ui) {
 
 	var graph = ui.editor.graph;
 	var enabled = true;
-	var counter = 0;
 
 	var graphViewResetValidationState = graph.view.resetValidationState;
 
