@@ -1,7 +1,130 @@
-/**
- * Sample plugin.
- */
+// load zotero api
+var script = document.createElement('script');
+script.src = "https://unpkg.com/zotero-api-client";
+document.head.appendChild(script);
+
+var zoteroApi; // will be set after load
+const str_token = '::';
+
+/* get author information */
+function get_author(authors) {
+    if (typeof authors === 'undefined' || authors.length <= 0)
+        return "Unknown author"
+    if (authors.length >= 3)
+        return authors[0].lastName + " et.al."
+    if (authors.length == 2)
+        return authors[0].lastName + " & " + authors[1].lastName
+    return authors[0].lastName;
+}
+
+/* get year information */
+function get_year(date) {
+    function filter_year(tokens) {
+        for (const t of tokens) {
+            y = parseInt(t)
+            if (!isNaN(y) && y > 50 && y < 10000)
+                return t
+        }
+    }
+    if (typeof date === 'undefined' || date == "")
+        return "Unknown year"
+    return filter_year(date.split(/[-/,]/))
+}
+
+/* get details*/
+function get_details(collection_name, title) {
+    return collection_name + str_token + title
+}
+
+/* Retrieve library from Zotero API */
+async function retreive(ApiKey, Uid) {
+    counter = 1
+    drawio_token = ''
+    const myapi = zoteroApi(ApiKey, {
+        'limit': 100
+    }).library('user', Uid)
+
+    try{
+        const collectionsRes = await myapi.collections().get();
+
+        collection_names = {}
+
+        console.log(collectionsRes)
+        promises = []
+
+        // Retrieve collection information
+        for (const [i, c] of collectionsRes.raw.entries()) {
+            console.log(c)
+            collection_names[c.key] = c.data.name
+            // colleciton_id = 'collection_' + c.key
+            // div_collection = $("<div class='card-body'></div>")
+            //     .attr('id', colleciton_id)
+            //     .append($("<h5 class='card-title'></h5>").text(c.data.name))
+
+            // Add promises to request for the items in collection
+            promises.push(new Promise((resolve, reject) => {
+                const itemRes = myapi.collections(c.key).items().get()
+                resolve(itemRes)
+            }))
+            // $("#references").append($("<div class='card'></div>").append(div_collection))
+            console.log(c.data.name)
+        }
+
+        // Append the content when the data available
+        for (const p of promises) {
+            p.then((itemRes) => {
+                const items = itemRes.getData()
+                items.forEach(item => {
+                    if (item.itemType != "attachment") {
+                        console.log(item)
+                        number = (typeof item.callNumber === 'undefined') ? ('') : (String(item.callNumber))
+                        // div_item = $("<div></div>")
+                        //     .append($("<h6></h6>").text(item.title))
+                        //     .append($("<p></p>").text(number)
+                        //         .append($("<span></span>").text(": " + get_author(item.creators)))
+                        //         .append($("<span></span>").text(" " + get_year(item.date))))
+                        item.collections.forEach((ckey) => {
+                            // collection_id = 'collection_' + ckey
+                            collection_name = collection_names[ckey]
+                            // $('#' + collection_id).append(div_item)
+
+                            // Generate metadata for drawio plugin
+                            kname = '[' + number + str_token
+                                + get_details(collection_name, item.title) + str_token
+                                + get_author(item.creators) + " "
+                                + get_year(item.date) + str_token
+                                + item.key + ']'
+                            // \u4e00-\u9fa5 is used to match Chinese character
+                            kname = kname.replace(/[^a-zA-Z0-9/.,&:\]\[\u4e00-\u9fa5]/g, "_")
+                            drawio_token += kname + ' '
+                        })
+                        counter += 1
+                    }
+                })
+            })
+        }
+
+        // Wait for all promise to finish no matter if it succeeded or rejected
+        Promise.allSettled(promises).then(([result]) => {
+            console.log("settled")
+        })   
+    }
+    catch (err){
+        console.log(err)
+        alert("Error: " + String(err) + '\nPlease check the UID and API key!')
+    }
+}
+
+script.onload = () => {
+zoteroApi = ZoteroApiClient.default;
 Draw.loadPlugin(function (ui) {
+    console.log(ui)
+    config = JSON.parse(localStorage.getItem(".configuration"));
+    zotero_uid = parseInt(config['zotero_uid'], 10);
+    zotero_api_key = config['zotero_api_key'];
+    console.log(config)
+
+    retreive(zotero_api_key, zotero_uid);
 
 	// Adds numbered toggle property
 	Editor.commonVertexProperties.push({
@@ -142,3 +265,4 @@ Draw.loadPlugin(function (ui) {
 		graph.refresh();
 	}
 });
+};
