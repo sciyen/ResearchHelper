@@ -1,7 +1,152 @@
-/**
- * Sample plugin.
- */
+// load zotero api
+var script = document.createElement('script');
+script.src = "https://unpkg.com/zotero-api-client";
+document.head.appendChild(script);
+
+var zoteroApi; // will be set after load
+const str_token = '::';
+
+/* get author information */
+function get_author(authors) {
+    if (typeof authors === 'undefined' || authors.length <= 0)
+        return "Unknown author"
+    if (authors.length >= 3)
+        return authors[0].lastName + " et.al."
+    if (authors.length == 2)
+        return authors[0].lastName + " & " + authors[1].lastName
+    return authors[0].lastName;
+}
+
+/* get year information */
+function get_year(date) {
+    function filter_year(tokens) {
+        for (const t of tokens) {
+            y = parseInt(t)
+            if (!isNaN(y) && y > 50 && y < 10000)
+                return t
+        }
+    }
+    if (typeof date === 'undefined' || date == "")
+        return "Unknown year"
+    return filter_year(date.split(/[-/,]/))
+}
+
+/* get details*/
+function get_details(collection_name, title) {
+    return collection_name + str_token + title
+}
+
+/* Retrieve library from Zotero API */
+async function retreive(ApiKey, Uid, callback) {
+    counter = 1
+    drawio_tags = [];
+    const myapi = zoteroApi(ApiKey, {
+        'limit': 100
+    }).library('user', Uid)
+
+    try{
+        const collectionsRes = await myapi.collections().get();
+
+        collection_names = {}
+
+        console.log(collectionsRes)
+        promises = []
+
+        // Retrieve collection information
+        for (const [i, c] of collectionsRes.raw.entries()) {
+            console.log(c)
+            collection_names[c.key] = c.data.name
+
+            // Add promises to request for the items in collection
+            promises.push(new Promise((resolve, reject) => {
+                const itemRes = myapi.collections(c.key).items().get()
+                resolve(itemRes)
+            }))
+            console.log(c.data.name)
+        }
+
+        // Append the content when the data available
+        for (const p of promises) {
+            p.then((itemRes) => {
+                const items = itemRes.getData()
+                items.forEach(item => {
+                    if (item.itemType != "attachment") {
+                        console.log(item)
+                        number = (typeof item.callNumber === 'undefined') ? ('') : (String(item.callNumber))
+                        
+                        item.collections.forEach((ckey) => {
+                            collection_name = collection_names[ckey]
+
+                            // Generate metadata for drawio plugin
+                            kname = '[' + number + str_token
+                                + get_details(collection_name, item.title) + str_token
+                                + get_author(item.creators) + " "
+                                + get_year(item.date) + str_token
+                                + item.key + ']'
+                            // \u4e00-\u9fa5 is used to match Chinese character
+                            kname = kname.replace(/[^a-zA-Z0-9/.,&:\]\[\u4e00-\u9fa5]/g, "_")
+                            drawio_tags.push(kname)
+                        })
+                        counter += 1
+                    }
+                })
+            })
+        }
+
+        // Wait for all promise to finish no matter if it succeeded or rejected
+        Promise.allSettled(promises).then((result) => {
+            callback(drawio_tags)
+        })   
+    }
+    catch (err){
+        console.log(err)
+        alert("Error: " + String(err) + '\nPlease check the UID and API key!')
+    }
+}
+
+function loadZoteroTags(ui) {
+    // disable button
+    let action = ui.actions.get('reloadZotero');
+    action.enabled = false;
+
+    // load from Zotero Api and add them to the list of tags (tags for the root)
+    config = JSON.parse(localStorage.getItem(".configuration"));
+    zotero_uid = parseInt(config['zotero_uid'], 10);
+    zotero_api_key = config['zotero_api_key'];
+
+    graph = ui.editor.graph;
+    root = graph.model.getRoot();
+
+    retreive(zotero_api_key, zotero_uid, (citations) => {
+        graph.addTagsForCells([root], citations)
+        action.enabled = true;
+    });
+}
+
+function setupZoretoMenu(ui) {
+    // Adds resource for action
+    mxResources.parse('reloadZotero=Reload Zotero...');
+
+    // Adds action
+    ui.actions.addAction('reloadZotero', () => {
+        loadZoteroTags(ui);
+    });
+
+    // Adds menu item for refreshing
+    let menu = ui.menus.get('extras');
+	let oldFunct = menu.funct;
+	
+	menu.funct = function(menu, parent)
+	{   
+        oldFunct.apply(this, arguments);
+        ui.menus.addMenuItems(menu, ['-', 'reloadZotero'], parent, );
+	};
+}
+
+script.onload = () => {
+zoteroApi = ZoteroApiClient.default;
 Draw.loadPlugin(function (ui) {
+    setupZoretoMenu(ui);
 
 	// Adds numbered toggle property
 	Editor.commonVertexProperties.push({
@@ -16,7 +161,6 @@ Draw.loadPlugin(function (ui) {
 
 	var graph = ui.editor.graph;
 	var enabled = true;
-	var counter = 0;
 
 	var graphViewResetValidationState = graph.view.resetValidationState;
 
@@ -142,3 +286,4 @@ Draw.loadPlugin(function (ui) {
 		graph.refresh();
 	}
 });
+};
