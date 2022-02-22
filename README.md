@@ -1,22 +1,24 @@
 # Research Helper
 
-This is a front-end only web tool which retrieves library from your [Zotero](https://www.zotero.org/) personal account and organizes your references according to the collection in it. The outputs can be used to generate `tags` in [diagrams.net](http://diagrams.net/), which allow one to make citations with unique hash key.
+This is a plugin for [diagrams.net(drawio)](http://diagrams.net/) which retrieves library from your [Zotero](https://www.zotero.org/) personal account and organizes your references according to the collection in it. With this plugin, you can add tags for blocks with standard citation format.
 
 # The Website
-- [Our customized drawio](https://sciyen.github.io/drawio/src/main/webapp/index.html?p=zotero.js)
-- [The researcher helper](https://sciyen.github.io/ResearchHelper/publics/index.html)
+- Please use [our customized drawio](https://sciyen.github.io/drawio/src/main/webapp/index.html?p=zotero.js). Third-party plugin is not allowed in the offical drawio webapp.
 
 ## Quick start
 1. Register a private API key from [here](https://www.zotero.org/settings/keys/new).
 2. Lookup for your userID from [here](https://www.zotero.org/settings/keys).
 3. Follow the steps in [this](https://github.com/sciyen/ResearchHelper/tree/main/plugins) to permanently add a plugin to your diagrams.
-4. Obtain the citation list with [our tool](https://sciyen.github.io/ResearchHelper/publics/index.html) and copy to clipboard.
-    + Note, you can click `Manage your passwords` at the right end of the url bar after entering the `UID` and `API key` to save the keys to your account.
-5. Paste the citation list to the `Tags` dialog in diagrams.net.
-    + You can open the dialog by clicking `View > Tags`, where you can see all the tags that you already have.
-    + Click `add` button and paste the citation list.
-    + Click `add` button and all the citations will be imported.
-6. Select a block, and add a tag from `Tags` dialog in your diagram.
+4. Enter the personal account information to diagrams.net.
+    + Click `Extras > Configurations` to configure the API key and UID.
+        ```
+        {
+          "zotero_uid": "YOUR_UID",
+          "zotero_api_key": "SOMEAPIKEY"
+        }
+        ```
+5. Click `Extras > Reload Zotero` to load the library to the list of tags.
+6. Select a block, and add a tag from `Tags` dialog (you can open it from `View > Tags`) in your diagram.
 7. And you should see the attached yellow block with standard citation.
     ![](https://i.imgur.com/Plw7U0k.png)
 
