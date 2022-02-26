@@ -26,3 +26,7 @@ We are currently working on following subjects. Feel free to join us.
 - Unclassified documents will not shown in the tags. As mentioned in [#2](https://github.com/sciyen/ResearchHelper/issues/2).
 - The call number may be occupied by some useful information (usually in the literature of the book type), if it is used as a reference number field. As mentioned in [#2](https://github.com/sciyen/ResearchHelper/issues/2).
 - Enhance user interface
+
+## Recommended method for debugging
+[This vscode extension](https://marketplace.visualstudio.com/items?itemName=peakchen90.open-html-in-browser) allows you to host the files with local server. And 
+[this chrome extension](https://chrome.google.com/webstore/detail/disable-content-security/ieelmcmcagommplceebfedjlakkhpden/) allow you to add plugins from arbitary sources. Thus, you can debug in local without pushing, which have been tested in windows 10 WSL 1.0.
