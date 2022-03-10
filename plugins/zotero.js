@@ -127,7 +127,10 @@ Draw.loadPlugin(function (ui) {
 			}
 	
 			var root_div = document.getElementById('references')
+			root_div.innerHTML = ''
 			function tree_build(target) {
+				if (collection_list[target].build) return;
+				
 				function create_new_collection(target){
 					collection_div = document.createElement('div')
 					collection_div.style.margin = '2px 0 2px 0'
@@ -145,14 +148,8 @@ Draw.loadPlugin(function (ui) {
 					})
 					return collection_div
 				}
-	
-				if (collection_list[target].build) return;
-	
-				//new_collection_div = $('<div class="card-body"></div>').attr('id', get_collection_id(target))
-				//    .append($('<h5></h5>').text(collection_list[target].name))
-	
+
 				new_collection_div = create_new_collection(target)
-	
 				if (collection_list[target].hasParent) {
 					parent_hash = collection_list[target].parentCollection
 					if (collection_list[parent_hash].build) {
@@ -170,7 +167,6 @@ Draw.loadPlugin(function (ui) {
 					// Append directly
 					root_div.append(new_collection_div)
 				}
-				console.log(collection_list[target].name + ' call')
 				collection_list[target].build = true
 			}
 	
@@ -185,6 +181,7 @@ Draw.loadPlugin(function (ui) {
 				}
 			}
 	
+			// Build collection container
 			for (const [key, value] of Object.entries(collection_list)) {
 				tree_build(key, () => { })
 			}
@@ -224,7 +221,7 @@ Draw.loadPlugin(function (ui) {
 								+ item.key + ']'
 							// \u4e00-\u9fa5 is used to match Chinese character
 							kname = kname.replace(/[^a-zA-Z0-9/.,&:\]\[\u4e00-\u9fa5]/g, "_")
-							console.log('add citation', kname)
+
 							btn = document.createElement('button')
 							btn.innerHTML = 'Add'
 							btn.setAttribute('value', kname)
