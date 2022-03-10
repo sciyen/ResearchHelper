@@ -8,32 +8,32 @@ const str_token = '::';
 
 /* get author information */
 function get_author(authors) {
-    if (typeof authors === 'undefined' || authors.length <= 0)
-        return "Unknown author"
-    if (authors.length >= 3)
-        return authors[0].lastName + " et.al."
-    if (authors.length == 2)
-        return authors[0].lastName + " & " + authors[1].lastName
-    return authors[0].lastName;
+	if (typeof authors === 'undefined' || authors.length <= 0)
+		return "Unknown author"
+	if (authors.length >= 3)
+		return authors[0].lastName + " et.al."
+	if (authors.length == 2)
+		return authors[0].lastName + " & " + authors[1].lastName
+	return authors[0].lastName;
 }
 
 /* get year information */
 function get_year(date) {
-    function filter_year(tokens) {
-        for (const t of tokens) {
-            y = parseInt(t)
-            if (!isNaN(y) && y > 50 && y < 10000)
-                return t
-        }
-    }
-    if (typeof date === 'undefined' || date == "")
-        return "Unknown year"
-    return filter_year(date.split(/[-/,]/))
+	function filter_year(tokens) {
+		for (const t of tokens) {
+			y = parseInt(t)
+			if (!isNaN(y) && y > 50 && y < 10000)
+				return t
+		}
+	}
+	if (typeof date === 'undefined' || date == "")
+		return "Unknown year"
+	return filter_year(date.split(/[-/,]/))
 }
 
 /* get details*/
-function get_details(collection_name, title) {
-    return collection_name + str_token + title
+function get_tagname(item) {
+    return '[' + item.title + str_token + get_author(item.creators) + " " + get_year(item.date) + str_token + item.key + ']'
 }
 
 /* Retrieve library from Zotero API */
@@ -78,13 +78,7 @@ async function retreive(ApiKey, Uid, callback) {
                             collection_name = collection_names[ckey]
 
                             // Generate metadata for drawio plugin
-                            kname = '[' + number + str_token
-                                + get_details(collection_name, item.title) + str_token
-                                + get_author(item.creators) + " "
-                                + get_year(item.date) + str_token
-                                + item.key + ']'
-                            // \u4e00-\u9fa5 is used to match Chinese character
-                            kname = kname.replace(/[^a-zA-Z0-9/.,&:\]\[\u4e00-\u9fa5]/g, "_")
+                            kname = get_tagname(item).replace(/[^a-zA-Z0-9/.,&:\]\[\u4e00-\u9fa5]/g, "_")
                             drawio_tags.push(kname)
                         })
                         counter += 1
@@ -214,13 +208,8 @@ Draw.loadPlugin(function (ui) {
 							div_item.innerHTML = '<p style="margin:0">' + item.title + '</p>' + '<span style="margin:0; color:#R00">' + citation + '</span>'
 	
 							// Generate metadata for drawio plugin
-							kname = '[' + number + str_token
-								+ get_details(collection_names[item.collections[0]], item.title) + str_token
-								+ get_author(item.creators) + " "
-								+ get_year(item.date) + str_token
-								+ item.key + ']'
 							// \u4e00-\u9fa5 is used to match Chinese character
-							kname = kname.replace(/[^a-zA-Z0-9/.,&:\]\[\u4e00-\u9fa5]/g, "_")
+							kname = get_tagname(item).replace(/[^a-zA-Z0-9/.,&:\]\[\u4e00-\u9fa5]/g, "_")
 
 							btn = document.createElement('button')
 							btn.innerHTML = 'Add'
@@ -486,7 +475,8 @@ Draw.loadPlugin(function (ui) {
 	};
 
 	function citation_pretty_print(token) {
-		return token[0] + ': ' + token[3].replace(/[^a-zA-Z0-9/.,&:\]\[]/g, " ") + ']'
+		return token[1].replace(/[^a-zA-Z0-9/.,&:\]\[]/g, " ") + ']'
+		//return token[0] + ': ' + token[3].replace(/[^a-zA-Z0-9/.,&:\]\[]/g, " ") + ']'
 	}
 
 	function get_citation_info(tag) {
