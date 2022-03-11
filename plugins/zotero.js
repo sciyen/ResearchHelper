@@ -275,14 +275,17 @@ Draw.loadPlugin(function (ui) {
 			config = JSON.parse(localStorage.getItem(".configuration"));
 			zotero_uid = parseInt(config['zotero_uid'], 10);
 			zotero_api_key = config['zotero_api_key'];
-		
-			graph = ui.editor.graph;
-			root = graph.model.getRoot();
-		
-			retreive_draw(zotero_api_key, zotero_uid, (citations) => {
-				//graph.addTagsForCells([root], citations)
-				evt.target.removeAttribute('disabled')
-			});
+
+			if (typeof(zotero_api_key) === 'undefined' || isNaN(zotero_uid))
+				alert('Please fill the zotero user id and api key before using this plugin. For more details, please refer to https://github.com/sciyen/ResearchHelper/tree/feature/drawio_plugin')
+			else{
+				graph = ui.editor.graph;
+				root = graph.model.getRoot();
+			
+				retreive_draw(zotero_api_key, zotero_uid, (citations) => {
+					evt.target.removeAttribute('disabled')
+				});
+			}
 		});
 	
 		this.window.addListener('show', mxUtils.bind(this, function(){
