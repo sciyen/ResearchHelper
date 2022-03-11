@@ -103,6 +103,28 @@ script.onload = () => {
 zoteroApi = ZoteroApiClient.default;
 Draw.loadPlugin(function (ui) {
 
+	function refresh_ui(){
+		selected_tags = graph.getCommonTagsForCells(graph.getSelectionCells())
+		key_list = []
+		selected_tags.forEach((tag)=>{
+			token = tag.split(str_token)
+			token = token[token.length-1]
+			key_list.push('item_' + token.substring(0, token.length-1))
+		})
+
+		var root_div = document.getElementById('references')
+		root_div.querySelectorAll('.item').forEach((item)=>{
+			if (key_list.includes(item.id)){
+				item.querySelector('button').innerHTML = 'Remove'
+				item.querySelector('button').style.backgroundColor = '#8888FF'
+			}
+			else {
+				item.querySelector('button').innerHTML = 'Add'
+				item.querySelector('button').style.backgroundColor = null
+			}
+		})
+	}
+
 	/* Retrieve library from Zotero API */
 	async function retreive_draw(ApiKey, Uid, callback) {
 		const myapi = zoteroApi(ApiKey, {
@@ -202,6 +224,7 @@ Draw.loadPlugin(function (ui) {
 							citation = `[${number}: ${get_author(item.creators)} ${get_year(item.date)}]`
 							div_item = document.createElement('div')
 							div_item.setAttribute('id', item_id)
+							div_item.classList.add('item')
 							div_item.style.borderRadius = '4px';
 							div_item.style.borderStyle = 'solid';
 							div_item.style.borderWidth = '1px';
@@ -217,9 +240,17 @@ Draw.loadPlugin(function (ui) {
 							btn.innerHTML = 'Add'
 							btn.setAttribute('value', kname)
 							btn.style.display = 'inline-block'
+							btn.style.background = null
 	
 							mxEvent.addListener(btn, 'click', (evt)=>{
-								graph.addTagsForCells(graph.getSelectionCells(), [evt.target.value]);
+								if (evt.target.innerHTML == 'Add'){
+									evt.target.innerHTML = 'Remove'
+									graph.addTagsForCells(graph.getSelectionCells(), [evt.target.value]);
+								}
+								else{
+									evt.target.innerHTML = 'Add'
+									graph.removeTagsForCells(graph.getSelectionCells(), [evt.target.value]);
+								}
 							})
 							div_item.append(btn)
 
@@ -372,6 +403,14 @@ Draw.loadPlugin(function (ui) {
 				graph.container.focus();
 			}
 		}));
+
+		graph.selectionModel.addListener(mxEvent.CHANGE, function(sender, evt){
+			refresh_ui();
+		});
+		
+		graph.model.addListener(mxEvent.CHANGE, function(sender, evt){
+			refresh_ui();
+		});
 		
 		this.window.setLocation = function(x, y){
 			var iw = window.innerWidth || document.body.clientWidth || document.documentElement.clientWidth;
