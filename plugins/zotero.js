@@ -196,10 +196,12 @@ Draw.loadPlugin(function (ui) {
 					items.forEach(item => {
 						if (item.itemType != "attachment") {
 							console.log(item)
+							item_id = 'item_' + item.key
 							number = (typeof item.callNumber === 'undefined') ? ('') : (String(item.callNumber))
 	
 							citation = `[${number}: ${get_author(item.creators)} ${get_year(item.date)}]`
 							div_item = document.createElement('div')
+							div_item.setAttribute('id', item_id)
 							div_item.style.borderRadius = '4px';
 							div_item.style.borderStyle = 'solid';
 							div_item.style.borderWidth = '1px';
@@ -232,7 +234,8 @@ Draw.loadPlugin(function (ui) {
 							item.collections.forEach((ckey) => {
 								collection_id = 'collection_' + ckey
 								collection_name = collection_names[ckey]
-								root_div.querySelector('#' + collection_id).append(div_item)
+								if (root_div.querySelector(`#${collection_id}>#${item_id}`) == null)
+									root_div.querySelector('#' + collection_id).append(div_item)
 							})
 							counter += 1
 
