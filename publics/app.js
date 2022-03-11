@@ -53,6 +53,42 @@ async function retreive(ApiKey, Uid) {
         console.log(collectionsRes)
         promises = []
 
+        collection_list = {}
+
+        function get_collection_id(hash) {
+            return 'collection_' + hash
+        }
+
+        root_id = "#references" //get_collection_id('root')
+        function tree_build(target) {
+            console.log(collection_list[target].name + '_enter')
+            if (collection_list[target].build) return;
+
+            new_collection_div = $('<div class="card-body"></div>').attr('id', get_collection_id(target))
+                .append($('<h5></h5>').text(collection_list[target].name))
+
+            if (collection_list[target].hasParent) {
+                parent_hash = collection_list[target].parentCollection
+                if (collection_list[parent_hash].build) {
+                    $(root_id).find('#' + get_collection_id(parent_hash)).append(new_collection_div)
+                }
+                else {
+                    // Parent haven't built
+                    tree_build(parent_hash)
+                    child_collection_div = $('<div class="card-body"></div>').attr('id', get_collection_id(target))
+                        .append($('<h5></h5>').text(collection_list[target].name))
+                    $(root_id).find('#' + get_collection_id(parent_hash)).append(child_collection_div)
+                    console.log(target + '_' + parent_hash)
+                }
+            }
+            else {
+                // Append directly
+                $(root_id).append(new_collection_div)
+            }
+            console.log(collection_list[target].name + ' call')
+            collection_list[target].build = true
+        }
+
         // Retrieve collection information
         for (const [i, c] of collectionsRes.raw.entries()) {
             console.log(c)
