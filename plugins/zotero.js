@@ -36,69 +36,6 @@ function get_tagname(item) {
     return '[' + item.title + str_token + get_author(item.creators) + " " + get_year(item.date) + str_token + item.key + ']'
 }
 
-/* Retrieve library from Zotero API */
-async function retreive(ApiKey, Uid, callback) {
-    counter = 1
-    drawio_tags = [];
-    const myapi = zoteroApi(ApiKey, {
-        'limit': 100
-    }).library('user', Uid)
-
-    try{
-        const collectionsRes = await myapi.collections().get();
-
-        collection_names = {}
-
-        console.log(collectionsRes)
-        promises = []
-
-        // Retrieve collection information
-        for (const [i, c] of collectionsRes.raw.entries()) {
-            console.log(c)
-            collection_names[c.key] = c.data.name
-
-            // Add promises to request for the items in collection
-            promises.push(new Promise((resolve, reject) => {
-                const itemRes = myapi.collections(c.key).items().get()
-                resolve(itemRes)
-            }))
-            console.log(c.data.name)
-        }
-
-        // Append the content when the data available
-        for (const p of promises) {
-            p.then((itemRes) => {
-                const items = itemRes.getData()
-                items.forEach(item => {
-                    if (item.itemType != "attachment") {
-                        console.log(item)
-                        number = (typeof item.callNumber === 'undefined') ? ('') : (String(item.callNumber))
-                        
-                        item.collections.forEach((ckey) => {
-                            collection_name = collection_names[ckey]
-
-                            // Generate metadata for drawio plugin
-                            kname = get_tagname(item).replace(/[^a-zA-Z0-9/.,&:\]\[\u4e00-\u9fa5]/g, "_")
-                            drawio_tags.push(kname)
-                        })
-                        counter += 1
-                    }
-                })
-            })
-        }
-
-        // Wait for all promise to finish no matter if it succeeded or rejected
-        Promise.allSettled(promises).then((result) => {
-            callback(drawio_tags)
-        })   
-    }
-    catch (err){
-        console.log(err)
-        alert("Error: " + String(err) + '\nPlease check the UID and API key!')
-    }
-}
-
-
 script.onload = () => {
 zoteroApi = ZoteroApiClient.default;
 Draw.loadPlugin(function (ui) {
@@ -114,13 +51,14 @@ Draw.loadPlugin(function (ui) {
 
 		var root_div = document.getElementById('references')
 		root_div.querySelectorAll('.item').forEach((item)=>{
+			btn = item.querySelector('button')
 			if (key_list.includes(item.id)){
-				item.querySelector('button').innerHTML = 'Remove'
-				item.querySelector('button').style.backgroundColor = '#8888FF'
+				btn.innerHTML = 'Remove'
+				item.style.setProperty("background-color", "#55BB22", "important"); //8888EE
 			}
 			else {
-				item.querySelector('button').innerHTML = 'Add'
-				item.querySelector('button').style.backgroundColor = null
+				btn.innerHTML = 'Add'
+				item.style.setProperty("background-color", null, "important");
 			}
 		})
 	}
@@ -240,7 +178,9 @@ Draw.loadPlugin(function (ui) {
 							btn.innerHTML = 'Add'
 							btn.setAttribute('value', kname)
 							btn.style.display = 'inline-block'
-							btn.style.background = null
+							btn.style.borderRadius = '4px';
+							btn.style.borderWidth = '1px';
+							btn.style.setProperty("background", null, "important");
 	
 							mxEvent.addListener(btn, 'click', (evt)=>{
 								if (evt.target.innerHTML == 'Add'){
@@ -254,13 +194,13 @@ Draw.loadPlugin(function (ui) {
 							})
 							div_item.append(btn)
 
-							mxEvent.addListener(div_item, 'mouseenter', (evt)=>{
+							/*mxEvent.addListener(div_item, 'mouseenter', (evt)=>{
 								evt.target.style.backgroundColor = '#55BB22'
 							})
 
 							mxEvent.addListener(div_item, 'mouseleave', (evt)=>{
 								evt.target.style.backgroundColor = null
-							})
+							})*/
 	
 							item.collections.forEach((ckey) => {
 								collection_id = 'collection_' + ckey
@@ -269,11 +209,6 @@ Draw.loadPlugin(function (ui) {
 									root_div.querySelector('#' + collection_id).append(div_item)
 							})
 							counter += 1
-
-							/*
-							selected_tags = graph.getCommonTagsForCells(graph.getSelectionCells())
-							graph.removeTagsForCells(graph.getSelectionCells(), [tag])
-							 */
 						}
 					})
 				})
@@ -289,51 +224,7 @@ Draw.loadPlugin(function (ui) {
 			alert("Error: " + String(err) + '\nPlease check the UID and API key!')
 		}
 	}
-	
-	function update_zotero_tags(ui, callback){
-		// disable button
-		let action = ui.actions.get('reloadZotero');
-		action.enabled = false;
-	
-		// load from Zotero Api and add them to the list of tags (tags for the root)
-		config = JSON.parse(localStorage.getItem(".configuration"));
-		zotero_uid = parseInt(config['zotero_uid'], 10);
-		zotero_api_key = config['zotero_api_key'];
-	
-		graph = ui.editor.graph;
-		root = graph.model.getRoot();
-	
-		retreive(zotero_api_key, zotero_uid, (citations) => {
-			graph.addTagsForCells([root], citations)
-			action.enabled = true;
-			callback(citations)
-		});
-	}
-	
-	function loadZoteroTags(ui) {
-		update_zotero_tags(ui, ()=>{})
-	}
-	
-	function setupZoretoMenu(ui) {
-		// Adds resource for action
-		mxResources.parse('reloadZotero=Reload Zotero...');
-	
-		// Adds action
-		ui.actions.addAction('reloadZotero', () => {
-			loadZoteroTags(ui);
-		});
-	
-		// Adds menu item for refreshing
-		let menu = ui.menus.get('extras');
-		let oldFunct = menu.funct;
-		
-		menu.funct = function(menu, parent)
-		{   
-			oldFunct.apply(this, arguments);
-			ui.menus.addMenuItems(menu, ['-', 'reloadZotero'], parent, );
-		};
-	}
-	
+
 	var TagSelectorWindow = function(editorUi, x, y, w, h){
 		var graph = editorUi.editor.graph;
 	
@@ -441,7 +332,7 @@ Draw.loadPlugin(function (ui) {
 	
 	function setupTagSelector(ui){
 		// Adds resource for action
-		mxResources.parse('tagSelector=Tag Selector');
+		mxResources.parse('tagSelector=Zotero Tag Selector');
 	
 		// Adds action
 		ui.actions.addAction('tagSelector...', () => {
@@ -476,8 +367,6 @@ Draw.loadPlugin(function (ui) {
 		};
 	}
 
-
-    setupZoretoMenu(ui);
 	setupTagSelector(ui);
 
 	// Adds numbered toggle property
@@ -517,7 +406,7 @@ Draw.loadPlugin(function (ui) {
 	};
 
 	function citation_pretty_print(token) {
-		return token[1].replace(/[^a-zA-Z0-9/.,&:\]\[]/g, " ") + ']'
+		return '[' + token[1].replace(/[^a-zA-Z0-9/.,&:\]\[]/g, " ") + ']'
 		//return token[0] + ': ' + token[3].replace(/[^a-zA-Z0-9/.,&:\]\[]/g, " ") + ']'
 	}
 
