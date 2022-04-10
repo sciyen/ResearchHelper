@@ -102,7 +102,7 @@ Draw.loadPlugin(function (ui) {
 					collection_div.style.paddingLeft = '2px'
 					collection_div.style.borderStyle = 'solid'
 					collection_div.style.borderWidth = '0 0 0 2px'
-					collection_div.innerHTML = '<h5 style="padding:5px 0 5px 0; background-color:#BBB; cursor:pointer; ">' + collection_list[target].name + '</h5><div style="max-height:500px" class="collapsible"></div>'
+					collection_div.innerHTML = '<h5 style="padding:5px 0 5px 0; background-color:#BBB; cursor:pointer; ">' + collection_list[target].name + '</h5><div style="max-height:10000px" class="collapsible"></div>'
 					collection_div.setAttribute('id', get_collection_id(target))
 
 					mxEvent.addListener(collection_div, 'mouseenter', (evt)=>{
