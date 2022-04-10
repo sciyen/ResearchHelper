@@ -5,6 +5,7 @@ document.head.appendChild(script);
 
 var zoteroApi; // will be set after load
 const str_token = '::';
+var item_list = {};
 
 /* get author information */
 function get_author(authors) {
@@ -154,10 +155,13 @@ Draw.loadPlugin(function (ui) {
 				p.then((itemRes) => {
 					const items = itemRes.getData()
 					items.forEach(item => {
-						if (item.itemType != "attachment") {
+						// Not append ing attachments and duplicated items
+						if (item.itemType != "attachment" && (typeof item_list[item.key] === 'undefined')) {
 							console.log(item)
+
 							item_id = 'item_' + item.key
-							number = (typeof item.callNumber === 'undefined') ? ('') : (String(item.callNumber))
+							number = String((typeof item.callNumber === 'undefined') ? (counter) : (item.callNumber));
+							number = String(counter)
 	
 							citation = `[${number}: ${get_author(item.creators)} ${get_year(item.date)}]`
 							div_item = document.createElement('div')
@@ -181,6 +185,14 @@ Draw.loadPlugin(function (ui) {
 							btn.style.borderRadius = '4px';
 							btn.style.borderWidth = '1px';
 							btn.style.setProperty("background", null, "important");
+
+							item_list[item.key] = {
+								'key': item.key,
+								'number': number, // TODO, string
+								'itemType': item.itemType,
+								'citation': citation,
+								'title': item.title
+							}
 	
 							mxEvent.addListener(btn, 'click', (evt)=>{
 								if (evt.target.innerHTML == 'Add'){
@@ -205,6 +217,7 @@ Draw.loadPlugin(function (ui) {
 							item.collections.forEach((ckey) => {
 								collection_id = 'collection_' + ckey
 								collection_name = collection_names[ckey]
+								// Only append items haven't shown before
 								if (root_div.querySelector(`#${collection_id}>#${item_id}`) == null)
 									root_div.querySelector('#' + collection_id).append(div_item)
 							})
@@ -417,10 +430,9 @@ Draw.loadPlugin(function (ui) {
 		token = tag.split('::')
 		item = {
 			'id': token[0],
-			'collection': token[1],
-			'title': token[2],
+			'title': token[1],
 			'citation': citation_pretty_print(token),
-			'key': token[4]
+			'key': token[2].replace(/[^A-Z0-9]/g, "")
 		}
 		return item
 	}
@@ -432,13 +444,18 @@ Draw.loadPlugin(function (ui) {
 		citation = ''
 		tags = graph.getTagsForCell(state.cell);
 		if (tags.length > 0) {
-			tags.split(' ').forEach((tag) => {
+			tags.split(' ').forEach((tag) => {	
+				var p = ''
 				info = get_citation_info(tag)
-				citation += info.citation + ' \n'
+				if (typeof item_list[info.key] === 'undefined')
+					p = `<p style="margin:0;background:#FFFF0088">${info.citation}</p>`
+				else
+					p = `<p style="margin:0;background:${(item_list[info.key].itemType == "journalArticle") ? '#FF8888AA' : '#55AAFFAA'}">${item_list[info.key].citation}</p>`;
+				citation += p;
 			})
 		}
 
-		var value = '<div style="padding:2px;border:1px solid gray;background:yellow;border-radius:2px;">'
+		var value = '<div style="padding:2px;border:1px solid gray;border-radius:2px;">'
 			+ citation + '</div>';
 
 
