@@ -7,6 +7,16 @@ var zoteroApi; // will be set after load
 const str_token = '::';
 var item_list = {};
 
+var style = document.createElement('style');
+style.type = 'text/css';
+style.innerHTML = `
+.collapsible { 
+	max-height: 0;
+	overflow: hidden;
+	transition: max-height 0.2s ease-out;
+}`;
+document.getElementsByTagName('head')[0].appendChild(style);
+
 /* get author information */
 function get_author(authors) {
 	if (typeof authors === 'undefined' || authors.length <= 0)
@@ -92,14 +102,26 @@ Draw.loadPlugin(function (ui) {
 					collection_div.style.paddingLeft = '2px'
 					collection_div.style.borderStyle = 'solid'
 					collection_div.style.borderWidth = '0 0 0 2px'
-					collection_div.innerHTML = '<h5 style="margin-bottom:5px">' + collection_list[target].name + '</h5>'
-					collection_div.setAttribute('id', get_collection_id(target))	
+					collection_div.innerHTML = '<h5 style="padding:5px 0 5px 0; background-color:#BBB; cursor:pointer; ">' + collection_list[target].name + '</h5><div style="max-height:500px" class="collapsible"></div>'
+					collection_div.setAttribute('id', get_collection_id(target))
+
 					mxEvent.addListener(collection_div, 'mouseenter', (evt)=>{
 						evt.target.style.backgroundColor = '#ffeb54'
 					})
 
 					mxEvent.addListener(collection_div, 'mouseleave', (evt)=>{
 						evt.target.style.backgroundColor = null
+					})
+
+					mxEvent.addListener(collection_div, 'click', (evt)=>{
+						evt.stopPropagation();
+						content = evt.target.nextElementSibling;
+						if (content != null){
+							if (content.style.maxHeight)
+								content.style.maxHeight = null;
+							else
+								content.style.maxHeight = content.scrollHeight + "px";
+						}
 					})
 					return collection_div
 				}
@@ -108,13 +130,13 @@ Draw.loadPlugin(function (ui) {
 				if (collection_list[target].hasParent) {
 					parent_hash = collection_list[target].parentCollection
 					if (collection_list[parent_hash].build) {
-						root_div.querySelector('#' + get_collection_id(parent_hash))
+						root_div.querySelector(`#${get_collection_id(parent_hash)}>div`)
 							.append(new_collection_div)
 					}
 					else {
 						// Parent haven't built
 						tree_build(parent_hash)
-						root_div.querySelector('#' + get_collection_id(parent_hash))
+						root_div.querySelector(`#${get_collection_id(parent_hash)}>div`)
 							.append(create_new_collection(target))
 					}
 				}
@@ -226,8 +248,8 @@ Draw.loadPlugin(function (ui) {
 								collection_id = 'collection_' + ckey
 								collection_name = collection_names[ckey]
 								// Only append items haven't shown before
-								if (root_div.querySelector(`#${collection_id}>#${item_id}`) == null)
-									root_div.querySelector('#' + collection_id).append(div_item)
+								if (root_div.querySelector(`#${collection_id}>div>#${item_id}`) == null)
+									root_div.querySelector(`#${collection_id}>div`).append(div_item)
 							})
 							counter += 1
 						}
