@@ -92,14 +92,13 @@ Draw.loadPlugin(function (ui) {
 			}
 	
 			var root_div = document.getElementById('references')
-			root_div.innerHTML = ''
 			function tree_build(target) {
 				if (collection_list[target].build) return;
 				
 				function create_new_collection(target){
 					collection_div = document.createElement('div')
 					collection_div.style.margin = '2px 0 2px 0'
-					collection_div.style.paddingLeft = '2px'
+					collection_div.style.paddingLeft = '5px'
 					collection_div.style.borderStyle = 'solid'
 					collection_div.style.borderWidth = '0 0 0 2px'
 					collection_div.innerHTML = '<h5 style="padding:5px 0 5px 0; background-color:#BBB; cursor:pointer; ">' + collection_list[target].name + '</h5><div style="max-height:10000px" class="collapsible"></div>'
