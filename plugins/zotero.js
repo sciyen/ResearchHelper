@@ -52,13 +52,13 @@ Draw.loadPlugin(function (ui) {
 
 		var root_div = document.getElementById('references')
 		root_div.querySelectorAll('.item').forEach((item)=>{
-			btn = item.querySelector('button')
+			btn = item.querySelector('.btn')
 			if (key_list.includes(item.id)){
-				btn.innerHTML = 'Remove'
-				item.style.setProperty("background-color", "#55BB22", "important"); //8888EE
+				btn.setAttribute('state', 'Remove')
+				item.style.setProperty("background-color", "#55BB22AA", "important"); //8888EE
 			}
 			else {
-				btn.innerHTML = 'Add'
+				btn.setAttribute('state', 'Add')
 				item.style.setProperty("background-color", null, "important");
 			}
 		})
@@ -160,7 +160,7 @@ Draw.loadPlugin(function (ui) {
 							console.log(item)
 
 							item_id = 'item_' + item.key
-							number = String((typeof item.callNumber === 'undefined') ? (counter) : (item.callNumber));
+							//number = String((typeof item.callNumber === 'undefined') ? (counter) : (item.callNumber));
 							number = String(counter)
 	
 							citation = `[${number}: ${get_author(item.creators)} ${get_year(item.date)}]`
@@ -172,19 +172,20 @@ Draw.loadPlugin(function (ui) {
 							div_item.style.borderWidth = '1px';
 							div_item.style.marginBottom = '2px';
 							div_item.style.padding = '2px 2px 2px 2px';
-							div_item.innerHTML = '<p style="margin:0">' + item.title + '</p>' + '<span style="margin:0; color:#R00">' + citation + '</span>'
+
+							label = document.createElement('p');
+							label.style.cursor = 'pointer';
+							label.style.margin = 0;
+							label.style.backgroundColor = (item.itemType == "journalArticle") ? '#FF8888' : '#55AAFF';
+							label.innerHTML = citation;
+
+							title = document.createElement('p');
+							title.style.margin = 0;
+							title.innerHTML = item.title;
 	
 							// Generate metadata for drawio plugin
 							// \u4e00-\u9fa5 is used to match Chinese character
 							kname = get_tagname(item).replace(/[^a-zA-Z0-9/.,&:\]\[\u4e00-\u9fa5]/g, "_")
-
-							btn = document.createElement('button')
-							btn.innerHTML = 'Add'
-							btn.setAttribute('value', kname)
-							btn.style.display = 'inline-block'
-							btn.style.borderRadius = '4px';
-							btn.style.borderWidth = '1px';
-							btn.style.setProperty("background", null, "important");
 
 							item_list[item.key] = {
 								'key': item.key,
@@ -193,18 +194,25 @@ Draw.loadPlugin(function (ui) {
 								'citation': citation,
 								'title': item.title
 							}
-	
-							mxEvent.addListener(btn, 'click', (evt)=>{
-								if (evt.target.innerHTML == 'Add'){
-									evt.target.innerHTML = 'Remove'
-									graph.addTagsForCells(graph.getSelectionCells(), [evt.target.value]);
+
+							label.classList.add('btn');
+							label.setAttribute('state', 'Add');
+							label.setAttribute('value', kname);
+							mxEvent.addListener(label, 'click', (evt)=>{
+								state = evt.target.getAttribute('state')
+								value = evt.target.getAttribute('value')
+								if (state == 'Add'){
+									state = 'Remove'
+									graph.addTagsForCells(graph.getSelectionCells(), [value]);
 								}
 								else{
-									evt.target.innerHTML = 'Add'
-									graph.removeTagsForCells(graph.getSelectionCells(), [evt.target.value]);
+									state = 'Add'
+									graph.removeTagsForCells(graph.getSelectionCells(), [value]);
 								}
 							})
-							div_item.append(btn)
+
+							div_item.append(label);
+							div_item.append(title);
 
 							/*mxEvent.addListener(div_item, 'mouseenter', (evt)=>{
 								evt.target.style.backgroundColor = '#55BB22'
