@@ -34,6 +34,18 @@ For developing usage, you can install this [chrome extension](https://chrome.goo
 7. And you should see the attached yellow block with standard citation format.
     ![](https://i.imgur.com/26mARED.png)
 
+## Steps to load plugin in official app website
+After [20.3.0 release](https://github.com/jgraph/drawio/commit/b5dfeb238369d664fb06a95e2179236b0e75f366), the author prohibited the load of third party plugin. And therefore, we need extra steps to bypass this checking. If you have better method to deal with this, please let me know, thanks.
+1. Press `F12` to open the dev tools, go to the `Source` tab, and open the file `top/app.diagrams.net/js/app.min.js`. Click the space left to the line number to add breakpoint at the beginning.
+2. Turn on the `disable-content-security` extension to disable CSR protection. 
+3. Refresh the page. You should notice that the page halts during loading.
+4. Go to the `Console` tab in dev tools. Enter 
+    ```
+    window.ALLOW_CUSTOM_PLUGINS = true
+    ```
+    and excute it.
+5. Resume the breakpoint.
+
 ## Get involved
 We are currently working on following subjects. Feel free to join us.
 - Developing the plugin for diagrams.net, please checkout to `feature/drawio_plugin` for more details
