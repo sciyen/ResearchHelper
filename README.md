@@ -25,10 +25,13 @@ For developing usage, you can install this [chrome extension](https://chrome.goo
     - Click `Add` and `Custom...`
     - Enter 
         ```
-        https://sciyen.github.io/ResearchHelper/plugins/zotero.js
+        plugins/zotero.js
         ```
+        <!--```
+        https://sciyen.github.io/ResearchHelper/plugins/zotero.js
+        ```-->
         and click `Add`. Finally, apply the change and **refresh the site**.  
-    ![](https://i.imgur.com/BTXNypT.png)
+    ![](https://i.imgur.com/cgqPJaz.png)
 5. Click `Extras > Zotero Tag Selector...` to open tag selector.
 6. Select a block in your diagram, and add a tag by clicking `Add` button or remove a tag by clicking `Remove`.
 7. And you should see the attached yellow block with standard citation format.
