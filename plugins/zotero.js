@@ -3,6 +3,11 @@ var script = document.createElement('script');
 script.src = "https://unpkg.com/zotero-api-client";
 document.head.appendChild(script);
 
+var style = document.createElement('link');
+style.setAttribute('rel', 'stylesheet');
+style.setAttribute('href', "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css")
+document.head.appendChild(style);
+
 var zoteroApi; // will be set after load
 const str_token = '::';
 var item_list = {};
@@ -14,6 +19,18 @@ style.innerHTML = `
 	max-height: 0;
 	overflow: hidden;
 	transition: max-height 0.2s ease-out;
+}
+.default_input_box {
+	box-sizing: border-box;
+	font-size = 12px;
+	border-radius = 4px;
+	padding = 4px;
+	margin-bottom = 8px;
+}
+.title_header {
+	margin: 0 0 10px 0;
+	text-align: center;
+	justify-content: center;
 }`;
 document.getElementsByTagName('head')[0].appendChild(style);
 
@@ -282,30 +299,80 @@ Draw.loadPlugin(function (ui) {
 		catch (err) {
 			console.log(err)
 			alert("Error: " + String(err) + '\nPlease check the UID and API key!')
+			callback()
 		}
 	}
 
 	var TagSelectorWindow = function(editorUi, x, y, w, h){
 		var graph = editorUi.editor.graph;
-	
+
+		
 		var div = document.createElement('div');
 		div.style.overflow = 'hidden';
 		div.style.padding = '12px 8px 12px 8px';
 		div.style.height = 'auto';
+
+		var InfoDiv = document.createElement('div');
+		InfoDiv.setHTML('<i class="fa fa-github"></i> <a href="https://github.com/sciyen/ResearchHelper">GitHub</a> © 2023 sciyen');
+		InfoDiv.classList.add('title_header');
+		div.appendChild(InfoDiv);
+
+		// Zotero UID and Key
+		var UIDDiv = document.createElement('div');
+		UIDDiv.innerHTML = '<label for="zotero_uid">Zotero UID    </label>';
+		var UIDInput = document.createElement('input');
+		UIDInput.setAttribute('id', 'zotero_uid');
+		UIDInput.setAttribute('placeholder', 'Zotero UID');
+		UIDInput.setAttribute('type', 'text');
+		UIDInput.classList.add('default_input_box');
+		UIDInput.style.width = '60%';
+		var UIDDes = document.createElement('a');
+		UIDDes.setHTML('Look up');
+		UIDDes.setAttribute('href', 'https://www.zotero.org/settings/keys');
+		UIDDes.setAttribute('target', '_blank');
+		UIDDes.setAttribute('rel', 'noopener noreferrer');
+		
+		var APIKeyDiv = document.createElement('div');
+		APIKeyDiv.innerHTML = '<label for="zotero_key">Zotero Key    </label>';
+		var APIKeyInput = document.createElement('input');
+		APIKeyInput.setAttribute('id', 'zotero_key');
+		APIKeyInput.setAttribute('placeholder', 'Zotero Key');
+		APIKeyInput.setAttribute('type', 'password');
+		APIKeyInput.classList.add('default_input_box');
+		APIKeyInput.style.width = '60%';
+		var APIKeyDes = document.createElement('a');
+		APIKeyDes.setHTML('Register');
+		APIKeyDes.setAttribute('href', 'https://www.zotero.org/settings/keys/new');
+		APIKeyDes.setAttribute('target', '_blank');
+		APIKeyDes.setAttribute('rel', 'noopener noreferrer');
+		
+		if (localStorage.getItem(".configuration") != null){
+			config = JSON.parse(localStorage.getItem(".configuration"));
+			zotero_uid = parseInt(config['zotero_uid'], 10);
+			UIDInput.value = config['zotero_uid'];
+			APIKeyInput.value = config['zotero_api_key'];
+		}
+
+		UIDDiv.append(UIDInput);
+		UIDDiv.append(UIDDes)
+		APIKeyDiv.append(APIKeyInput);
+		APIKeyDiv.append(APIKeyDes);
+		div.appendChild(UIDDiv);
+		div.appendChild(APIKeyDiv);
+		// Zotero UID and Key
 	
+		// Searching by Title
 		var updateBtn = document.createElement('button');
 		updateBtn.innerHTML = 'Refresh'
+		updateBtn.style.width = '40%';
+		updateBtn.style.margin = '5px auto 5px auto';
 		div.appendChild(updateBtn);
 	
 		var filterInput = document.createElement('input');
 		filterInput.setAttribute('placeholder', 'Search by Title');
 		filterInput.setAttribute('type', 'text');
+		filterInput.classList.add('default_input_box');
 		filterInput.style.width = '100%';
-		filterInput.style.boxSizing = 'border-box';
-		filterInput.style.fontSize = '12px';
-		filterInput.style.borderRadius = '4px';
-		filterInput.style.padding = '4px';
-		filterInput.style.marginBottom = '8px';
 		div.appendChild(filterInput);
 
 		var searchResultDiv = document.createElement('div');
@@ -316,6 +383,7 @@ Draw.loadPlugin(function (ui) {
 		searchResultDiv.style.padding = '12px 8px 12px 8px';
 		searchResultDiv.innerHTML = '<h4 style="padding:5px 0 5px 0;">Searching Results</h4>'
 		div.appendChild(searchResultDiv);
+		// Searching by Title
 
 		var referenceDiv = document.createElement('div');
 		referenceDiv.setAttribute('id', 'references')
@@ -372,10 +440,9 @@ Draw.loadPlugin(function (ui) {
 			evt.target.setAttribute('disabled', 'disabled')
 		
 			// load from Zotero Api and add them to the list of tags (tags for the root)
-			config = JSON.parse(localStorage.getItem(".configuration"));
-			zotero_uid = parseInt(config['zotero_uid'], 10);
-			zotero_api_key = config['zotero_api_key'];
-
+			zotero_uid = parseInt(div.querySelector('#zotero_uid').value, 10); //config['zotero_uid'];
+			zotero_api_key = div.querySelector('#zotero_key').value; //config['zotero_api_key'];
+			
 			if (typeof(zotero_api_key) === 'undefined' || isNaN(zotero_uid))
 				alert('Please fill the zotero user id and api key before using this plugin. For more details, please refer to https://github.com/sciyen/ResearchHelper/tree/feature/drawio_plugin')
 			else{
@@ -385,6 +452,13 @@ Draw.loadPlugin(function (ui) {
 				retreive_draw(zotero_api_key, zotero_uid, (citations) => {
 					evt.target.removeAttribute('disabled')
 				});
+
+				// Permanently save keys
+				config = {
+					'zotero_uid': zotero_uid,
+					'zotero_api_key': zotero_api_key
+				}
+				localStorage.setItem('.configuration', JSON.stringify(config));
 			}
 		});
 	

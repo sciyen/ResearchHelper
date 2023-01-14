@@ -6,20 +6,7 @@ This is a plugin for [diagrams.net(drawio)](http://diagrams.net/) which retrieve
 Please use [our customized drawio](https://sciyen.github.io/drawio/src/main/webapp/index.html?p=zotero.js). Third-party plugin is not allowed in the offical drawio webapp directly.
 
 ## Quick Start
-1. Register a private API key from [here](https://www.zotero.org/settings/keys/new).
-2. Lookup for your userID from [here](https://www.zotero.org/settings/keys).
-3. Enter the personal account information to diagrams.net.
-    + Click `Extras > Configurations` to configure the API key and UID.
-        ```
-        {
-          "zotero_uid": "YOUR_UID",
-          "zotero_api_key": "SOMEAPIKEY"
-        }
-        ```
-        For example:
-
-        ![](https://i.imgur.com/5zwmgLz.png)
-4. Permanently add the plugin. 
+1. Add the plugin. 
     - Go to `Extra > Plugins...`
     - Click `Add` and `Custom...`
     - Enter 
@@ -28,7 +15,12 @@ Please use [our customized drawio](https://sciyen.github.io/drawio/src/main/weba
         ```
         and click `Add`. Finally, apply the change and **refresh the site**.  
     ![](https://i.imgur.com/WZKridU.png)
-5. Click `Extras > Zotero Tag Selector...` to open tag selector.
+2. Click `Extras > Zotero Tag Selector...` to open tag selector.
+3. Enter the personal account information to diagrams.net.
+    - Register a private API key from [here](https://www.zotero.org/settings/keys/new).
+    - Lookup for your userID from [here](https://www.zotero.org/settings/keys) (login first).
+    - Enter the UID and keys, and click `Refresh` button.
+        ![](https://i.imgur.com/7IrpZmx.png)
 6. Select a block in your diagram, and add a tag by clicking `Add` button or remove a tag by clicking `Remove`.
 7. And you should see the attached block with standard citation format. The red color indicates a journal paper; the blue one indicates a conference paper.
     ![](https://i.imgur.com/RyzVzqi.png)
