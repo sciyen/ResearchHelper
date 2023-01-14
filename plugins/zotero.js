@@ -73,6 +73,31 @@ Draw.loadPlugin(function (ui) {
 			}
 		})
 	}
+	
+	function get_collection_id(hash) {
+		return 'collection_' + hash
+	}
+
+	function get_item_id(hash) {
+		return 'item_' + hash
+	}
+
+	function set_item_click_evt(div_item) {
+		mxEvent.addListener(div_item, 'click', (evt)=>{
+			state = evt.target.getAttribute('state')
+			value = evt.target.getAttribute('value')
+			if (state == 'Add'){
+				evt.target.setAttribute('state', 'Remove')
+				console.log('add')
+				graph.addTagsForCells(graph.getSelectionCells(), [value]);
+			}
+			else{
+				evt.target.setAttribute('state', 'Add')
+				console.log('remove')
+				graph.removeTagsForCells(graph.getSelectionCells(), [value]);
+			}
+		})
+	}
 
 	/* Retrieve library from Zotero API */
 	async function retreive_draw(ApiKey, Uid, callback) {
@@ -87,16 +112,12 @@ Draw.loadPlugin(function (ui) {
 			promises = []
 			counter = 1
 	
-			function get_collection_id(hash) {
-				return 'collection_' + hash
-			}
-	
 			var root_div = document.getElementById('references')
 			function tree_build(target) {
 				if (collection_list[target].build) return;
 				
 				function create_new_collection(target){
-					// Avoiding recrating collection box if the container already exists.
+					// Avoiding recreating collection box if the container already exists.
 					if (root_div.querySelector(`#${get_collection_id(target)}`) != null)
 						return root_div.querySelector(`#${get_collection_id(target)}`);
 
@@ -184,12 +205,12 @@ Draw.loadPlugin(function (ui) {
 						if (item.itemType != "attachment" && (typeof item_list[item.key] === 'undefined')) {
 							console.log(item)
 							item.collections.forEach((ckey) => {
-								collection_id = 'collection_' + ckey
+								collection_id = get_collection_id(ckey)
 								collection_name = collection_names[ckey]
 								// div_item needs to be re-created for each time, 
 								// otherwise, the click event will not be called.
 
-								item_id = 'item_' + item.key
+								item_id = get_item_id(item.key)
 								//number = String((typeof item.callNumber === 'undefined') ? (counter) : (item.callNumber));
 								number = String(counter)
 		
@@ -228,20 +249,7 @@ Draw.loadPlugin(function (ui) {
 								label.classList.add('btn');
 								label.setAttribute('state', 'Add');
 								label.setAttribute('value', kname);
-								mxEvent.addListener(label, 'click', (evt)=>{
-									state = evt.target.getAttribute('state')
-									value = evt.target.getAttribute('value')
-									if (state == 'Add'){
-										state = 'Remove'
-										console.log('add')
-										graph.addTagsForCells(graph.getSelectionCells(), [value]);
-									}
-									else{
-										state = 'Add'
-										console.log('remove')
-										graph.removeTagsForCells(graph.getSelectionCells(), [value]);
-									}
-								})
+								set_item_click_evt(label);
 
 								div_item.append(label);
 								div_item.append(title);
@@ -290,7 +298,7 @@ Draw.loadPlugin(function (ui) {
 		div.appendChild(updateBtn);
 	
 		var filterInput = document.createElement('input');
-		filterInput.setAttribute('placeholder', 'Type in the tags and press Enter to add them');
+		filterInput.setAttribute('placeholder', 'Search by Title');
 		filterInput.setAttribute('type', 'text');
 		filterInput.style.width = '100%';
 		filterInput.style.boxSizing = 'border-box';
@@ -300,11 +308,22 @@ Draw.loadPlugin(function (ui) {
 		filterInput.style.marginBottom = '8px';
 		div.appendChild(filterInput);
 
+		var searchResultDiv = document.createElement('div');
+		searchResultDiv.setAttribute('id', 'search_results')
+		searchResultDiv.classList.add('item_container');
+		searchResultDiv.style.width = '100%';
+		searchResultDiv.style.overflow = 'hidden';
+		searchResultDiv.style.padding = '12px 8px 12px 8px';
+		searchResultDiv.innerHTML = '<h4 style="padding:5px 0 5px 0;">Searching Results</h4>'
+		div.appendChild(searchResultDiv);
+
 		var referenceDiv = document.createElement('div');
 		referenceDiv.setAttribute('id', 'references')
+		referenceDiv.classList.add('item_container');
 		referenceDiv.style.width = '100%';
 		referenceDiv.style.overflow = 'hidden';
 		referenceDiv.style.padding = '12px 8px 12px 8px';
+		referenceDiv.innerHTML = '<h4 style="padding:5px 0 5px 0;">Collections</h4>'
 		div.appendChild(referenceDiv);
 	
 		this.window = new mxWindow(mxResources.get('tagSelector'), div, x, y, w, null, true, true);
@@ -315,9 +334,38 @@ Draw.loadPlugin(function (ui) {
 		this.window.setClosable(true);
 		this.window.contentWrapper.style.overflowY = 'scroll';
 	
-		mxEvent.addListener(filterInput, 'keyup', function(){
+		mxEvent.addListener(filterInput, 'keyup', function(evt){
 			// Do something
-			console.log('keyup')
+			var keyword = evt.target.value.toLowerCase();
+
+			function search_in_items(keyword){
+				if (keyword.length <= 2) return;
+				var results_div = document.getElementById('search_results');
+				var root_div = document.getElementById('references');
+
+				for (const [key, item] of Object.entries(item_list)) {
+					// console.log(key, value);
+					item_id = get_item_id(key);
+					if (item.title.toLowerCase().indexOf(keyword) >= 0){
+						// append in results
+						if (results_div.querySelector(`#${item_id}`) == null){
+							// search in collections
+							var div_item = root_div.querySelector(`#${item_id}`).cloneNode(true);
+							set_item_click_evt(div_item);
+							results_div.append(div_item)
+						}
+					}
+					else {
+						// delete in results
+						results = results_div.querySelector(`#${item_id}`);
+						if (results != null){
+							results.remove();
+						}
+					}
+				}
+			}
+
+			search_in_items(keyword);
 		});
 	
 		mxEvent.addListener(updateBtn, 'click', function(evt){
