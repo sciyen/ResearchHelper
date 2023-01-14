@@ -3,6 +3,11 @@ var script = document.createElement('script');
 script.src = "https://unpkg.com/zotero-api-client";
 document.head.appendChild(script);
 
+var style = document.createElement('link');
+style.setAttribute('rel', 'stylesheet');
+style.setAttribute('href', "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css")
+document.head.appendChild(style);
+
 var zoteroApi; // will be set after load
 const str_token = '::';
 var item_list = {};
@@ -14,6 +19,18 @@ style.innerHTML = `
 	max-height: 0;
 	overflow: hidden;
 	transition: max-height 0.2s ease-out;
+}
+.default_input_box {
+	box-sizing: border-box;
+	font-size = 12px;
+	border-radius = 4px;
+	padding = 4px;
+	margin-bottom = 8px;
+}
+.title_header {
+	margin: 0 0 10px 0;
+	text-align: center;
+	justify-content: center;
 }`;
 document.getElementsByTagName('head')[0].appendChild(style);
 
@@ -73,6 +90,31 @@ Draw.loadPlugin(function (ui) {
 			}
 		})
 	}
+	
+	function get_collection_id(hash) {
+		return 'collection_' + hash
+	}
+
+	function get_item_id(hash) {
+		return 'item_' + hash
+	}
+
+	function set_item_click_evt(div_item) {
+		mxEvent.addListener(div_item, 'click', (evt)=>{
+			state = evt.target.getAttribute('state')
+			value = evt.target.getAttribute('value')
+			if (state == 'Add'){
+				evt.target.setAttribute('state', 'Remove')
+				console.log('add')
+				graph.addTagsForCells(graph.getSelectionCells(), [value]);
+			}
+			else{
+				evt.target.setAttribute('state', 'Add')
+				console.log('remove')
+				graph.removeTagsForCells(graph.getSelectionCells(), [value]);
+			}
+		})
+	}
 
 	/* Retrieve library from Zotero API */
 	async function retreive_draw(ApiKey, Uid, callback) {
@@ -87,15 +129,15 @@ Draw.loadPlugin(function (ui) {
 			promises = []
 			counter = 1
 	
-			function get_collection_id(hash) {
-				return 'collection_' + hash
-			}
-	
 			var root_div = document.getElementById('references')
 			function tree_build(target) {
 				if (collection_list[target].build) return;
 				
 				function create_new_collection(target){
+					// Avoiding recreating collection box if the container already exists.
+					if (root_div.querySelector(`#${get_collection_id(target)}`) != null)
+						return root_div.querySelector(`#${get_collection_id(target)}`);
+
 					collection_div = document.createElement('div')
 					collection_div.style.margin = '2px 0 2px 0'
 					collection_div.style.paddingLeft = '5px'
@@ -179,76 +221,69 @@ Draw.loadPlugin(function (ui) {
 						// Not append ing attachments and duplicated items
 						if (item.itemType != "attachment" && (typeof item_list[item.key] === 'undefined')) {
 							console.log(item)
-
-							item_id = 'item_' + item.key
-							//number = String((typeof item.callNumber === 'undefined') ? (counter) : (item.callNumber));
-							number = String(counter)
-	
-							citation = `[${number}: ${get_author(item.creators)} ${get_year(item.date)}]`
-							div_item = document.createElement('div')
-							div_item.setAttribute('id', item_id)
-							div_item.classList.add('item')
-							div_item.style.borderRadius = '4px';
-							div_item.style.borderStyle = 'solid';
-							div_item.style.borderWidth = '1px';
-							div_item.style.marginBottom = '2px';
-							div_item.style.padding = '2px 2px 2px 2px';
-
-							label = document.createElement('p');
-							label.style.cursor = 'pointer';
-							label.style.margin = 0;
-							label.style.backgroundColor = (item.itemType == "journalArticle") ? '#FF8888' : '#55AAFF';
-							label.innerHTML = citation;
-
-							title = document.createElement('p');
-							title.style.margin = 0;
-							title.innerHTML = item.title;
-	
-							// Generate metadata for drawio plugin
-							// \u4e00-\u9fa5 is used to match Chinese character
-							kname = get_tagname(item).replace(/[^a-zA-Z0-9/.,&:\]\[\u4e00-\u9fa5]/g, "_")
-
-							item_list[item.key] = {
-								'key': item.key,
-								'number': number, // TODO, string
-								'itemType': item.itemType,
-								'citation': citation,
-								'title': item.title
-							}
-
-							label.classList.add('btn');
-							label.setAttribute('state', 'Add');
-							label.setAttribute('value', kname);
-							mxEvent.addListener(label, 'click', (evt)=>{
-								state = evt.target.getAttribute('state')
-								value = evt.target.getAttribute('value')
-								if (state == 'Add'){
-									state = 'Remove'
-									graph.addTagsForCells(graph.getSelectionCells(), [value]);
-								}
-								else{
-									state = 'Add'
-									graph.removeTagsForCells(graph.getSelectionCells(), [value]);
-								}
-							})
-
-							div_item.append(label);
-							div_item.append(title);
-
-							/*mxEvent.addListener(div_item, 'mouseenter', (evt)=>{
-								evt.target.style.backgroundColor = '#55BB22'
-							})
-
-							mxEvent.addListener(div_item, 'mouseleave', (evt)=>{
-								evt.target.style.backgroundColor = null
-							})*/
-	
 							item.collections.forEach((ckey) => {
-								collection_id = 'collection_' + ckey
+								collection_id = get_collection_id(ckey)
 								collection_name = collection_names[ckey]
+								// div_item needs to be re-created for each time, 
+								// otherwise, the click event will not be called.
+
+								item_id = get_item_id(item.key)
+								//number = String((typeof item.callNumber === 'undefined') ? (counter) : (item.callNumber));
+								number = String(counter)
+		
+								citation = `[${number}: ${get_author(item.creators)} ${get_year(item.date)}]`
+								div_item = document.createElement('div')
+								div_item.setAttribute('id', item_id)
+								div_item.classList.add('item')
+								div_item.style.borderRadius = '4px';
+								div_item.style.borderStyle = 'solid';
+								div_item.style.borderWidth = '1px';
+								div_item.style.marginBottom = '2px';
+								div_item.style.padding = '2px 2px 2px 2px';
+
+								label = document.createElement('p');
+								label.style.cursor = 'pointer';
+								label.style.margin = 0;
+								label.style.backgroundColor = (item.itemType == "journalArticle") ? '#FF8888' : '#55AAFF';
+								label.innerHTML = citation;
+
+								title = document.createElement('p');
+								title.style.margin = 0;
+								title.innerHTML = item.title;
+		
+								// Generate metadata for drawio plugin
+								// \u4e00-\u9fa5 is used to match Chinese character
+								kname = get_tagname(item).replace(/[^a-zA-Z0-9/.,&:\]\[\u4e00-\u9fa5]/g, "_")
+
+								item_list[item.key] = {
+									'key': item.key,
+									'number': number, // TODO, string
+									'itemType': item.itemType,
+									'citation': citation,
+									'title': item.title
+								}
+
+								label.classList.add('btn');
+								label.setAttribute('state', 'Add');
+								label.setAttribute('value', kname);
+								set_item_click_evt(label);
+
+								div_item.append(label);
+								div_item.append(title);
+
+								/*mxEvent.addListener(div_item, 'mouseenter', (evt)=>{
+									evt.target.style.backgroundColor = '#55BB22'
+								})
+
+								mxEvent.addListener(div_item, 'mouseleave', (evt)=>{
+									evt.target.style.backgroundColor = null
+								})*/
+	
 								// Only append items haven't shown before
-								if (root_div.querySelector(`#${collection_id}>div>#${item_id}`) == null)
+								console.log(item_id + ' into ' + collection_names[ckey] + ' , ' + collection_id + ' , ' + (root_div.querySelector(`#${collection_id}>div>#${item_id}`) == null))
+								if (root_div.querySelector(`#${collection_id}>div>#${item_id}`) == null){
 									root_div.querySelector(`#${collection_id}>div`).append(div_item)
+								}
 							})
 							counter += 1
 						}
@@ -264,37 +299,99 @@ Draw.loadPlugin(function (ui) {
 		catch (err) {
 			console.log(err)
 			alert("Error: " + String(err) + '\nPlease check the UID and API key!')
+			callback()
 		}
 	}
 
 	var TagSelectorWindow = function(editorUi, x, y, w, h){
 		var graph = editorUi.editor.graph;
-	
+
+		
 		var div = document.createElement('div');
 		div.style.overflow = 'hidden';
 		div.style.padding = '12px 8px 12px 8px';
 		div.style.height = 'auto';
+
+		var InfoDiv = document.createElement('div');
+		InfoDiv.setHTML('<i class="fa fa-github"></i> <a href="https://github.com/sciyen/ResearchHelper">GitHub</a> © 2023 sciyen');
+		InfoDiv.classList.add('title_header');
+		div.appendChild(InfoDiv);
+
+		// Zotero UID and Key
+		var UIDDiv = document.createElement('div');
+		UIDDiv.innerHTML = '<label for="zotero_uid">Zotero UID    </label>';
+		var UIDInput = document.createElement('input');
+		UIDInput.setAttribute('id', 'zotero_uid');
+		UIDInput.setAttribute('placeholder', 'Zotero UID');
+		UIDInput.setAttribute('type', 'text');
+		UIDInput.classList.add('default_input_box');
+		UIDInput.style.width = '60%';
+		var UIDDes = document.createElement('a');
+		UIDDes.setHTML('Look up');
+		UIDDes.setAttribute('href', 'https://www.zotero.org/settings/keys');
+		UIDDes.setAttribute('target', '_blank');
+		UIDDes.setAttribute('rel', 'noopener noreferrer');
+		
+		var APIKeyDiv = document.createElement('div');
+		APIKeyDiv.innerHTML = '<label for="zotero_key">Zotero Key    </label>';
+		var APIKeyInput = document.createElement('input');
+		APIKeyInput.setAttribute('id', 'zotero_key');
+		APIKeyInput.setAttribute('placeholder', 'Zotero Key');
+		APIKeyInput.setAttribute('type', 'password');
+		APIKeyInput.classList.add('default_input_box');
+		APIKeyInput.style.width = '60%';
+		var APIKeyDes = document.createElement('a');
+		APIKeyDes.setHTML('Register');
+		APIKeyDes.setAttribute('href', 'https://www.zotero.org/settings/keys/new');
+		APIKeyDes.setAttribute('target', '_blank');
+		APIKeyDes.setAttribute('rel', 'noopener noreferrer');
+		
+		if (localStorage.getItem(".configuration") != null){
+			config = JSON.parse(localStorage.getItem(".configuration"));
+			zotero_uid = parseInt(config['zotero_uid'], 10);
+			UIDInput.value = config['zotero_uid'];
+			APIKeyInput.value = config['zotero_api_key'];
+		}
+
+		UIDDiv.append(UIDInput);
+		UIDDiv.append(UIDDes)
+		APIKeyDiv.append(APIKeyInput);
+		APIKeyDiv.append(APIKeyDes);
+		div.appendChild(UIDDiv);
+		div.appendChild(APIKeyDiv);
+		// Zotero UID and Key
 	
+		// Searching by Title
 		var updateBtn = document.createElement('button');
 		updateBtn.innerHTML = 'Refresh'
+		updateBtn.style.width = '40%';
+		updateBtn.style.margin = '5px auto 5px auto';
 		div.appendChild(updateBtn);
 	
 		var filterInput = document.createElement('input');
-		filterInput.setAttribute('placeholder', 'Type in the tags and press Enter to add them');
+		filterInput.setAttribute('placeholder', 'Search by Title');
 		filterInput.setAttribute('type', 'text');
+		filterInput.classList.add('default_input_box');
 		filterInput.style.width = '100%';
-		filterInput.style.boxSizing = 'border-box';
-		filterInput.style.fontSize = '12px';
-		filterInput.style.borderRadius = '4px';
-		filterInput.style.padding = '4px';
-		filterInput.style.marginBottom = '8px';
 		div.appendChild(filterInput);
+
+		var searchResultDiv = document.createElement('div');
+		searchResultDiv.setAttribute('id', 'search_results')
+		searchResultDiv.classList.add('item_container');
+		searchResultDiv.style.width = '100%';
+		searchResultDiv.style.overflow = 'hidden';
+		searchResultDiv.style.padding = '12px 8px 12px 8px';
+		searchResultDiv.innerHTML = '<h4 style="padding:5px 0 5px 0;">Searching Results</h4>'
+		div.appendChild(searchResultDiv);
+		// Searching by Title
 
 		var referenceDiv = document.createElement('div');
 		referenceDiv.setAttribute('id', 'references')
+		referenceDiv.classList.add('item_container');
 		referenceDiv.style.width = '100%';
 		referenceDiv.style.overflow = 'hidden';
 		referenceDiv.style.padding = '12px 8px 12px 8px';
+		referenceDiv.innerHTML = '<h4 style="padding:5px 0 5px 0;">Collections</h4>'
 		div.appendChild(referenceDiv);
 	
 		this.window = new mxWindow(mxResources.get('tagSelector'), div, x, y, w, null, true, true);
@@ -305,19 +402,47 @@ Draw.loadPlugin(function (ui) {
 		this.window.setClosable(true);
 		this.window.contentWrapper.style.overflowY = 'scroll';
 	
-		mxEvent.addListener(filterInput, 'keyup', function(){
+		mxEvent.addListener(filterInput, 'keyup', function(evt){
 			// Do something
-			console.log('keyup')
+			var keyword = evt.target.value.toLowerCase();
+
+			function search_in_items(keyword){
+				if (keyword.length <= 2) return;
+				var results_div = document.getElementById('search_results');
+				var root_div = document.getElementById('references');
+
+				for (const [key, item] of Object.entries(item_list)) {
+					// console.log(key, value);
+					item_id = get_item_id(key);
+					if (item.title.toLowerCase().indexOf(keyword) >= 0){
+						// append in results
+						if (results_div.querySelector(`#${item_id}`) == null){
+							// search in collections
+							var div_item = root_div.querySelector(`#${item_id}`).cloneNode(true);
+							set_item_click_evt(div_item);
+							results_div.append(div_item)
+						}
+					}
+					else {
+						// delete in results
+						results = results_div.querySelector(`#${item_id}`);
+						if (results != null){
+							results.remove();
+						}
+					}
+				}
+			}
+
+			search_in_items(keyword);
 		});
 	
 		mxEvent.addListener(updateBtn, 'click', function(evt){
 			evt.target.setAttribute('disabled', 'disabled')
 		
 			// load from Zotero Api and add them to the list of tags (tags for the root)
-			config = JSON.parse(localStorage.getItem(".configuration"));
-			zotero_uid = parseInt(config['zotero_uid'], 10);
-			zotero_api_key = config['zotero_api_key'];
-
+			zotero_uid = parseInt(div.querySelector('#zotero_uid').value, 10); //config['zotero_uid'];
+			zotero_api_key = div.querySelector('#zotero_key').value; //config['zotero_api_key'];
+			
 			if (typeof(zotero_api_key) === 'undefined' || isNaN(zotero_uid))
 				alert('Please fill the zotero user id and api key before using this plugin. For more details, please refer to https://github.com/sciyen/ResearchHelper/tree/feature/drawio_plugin')
 			else{
@@ -327,6 +452,13 @@ Draw.loadPlugin(function (ui) {
 				retreive_draw(zotero_api_key, zotero_uid, (citations) => {
 					evt.target.removeAttribute('disabled')
 				});
+
+				// Permanently save keys
+				config = {
+					'zotero_uid': zotero_uid,
+					'zotero_api_key': zotero_api_key
+				}
+				localStorage.setItem('.configuration', JSON.stringify(config));
 			}
 		});
 	
