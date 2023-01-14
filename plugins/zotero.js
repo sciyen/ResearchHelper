@@ -179,76 +179,82 @@ Draw.loadPlugin(function (ui) {
 						// Not append ing attachments and duplicated items
 						if (item.itemType != "attachment" && (typeof item_list[item.key] === 'undefined')) {
 							console.log(item)
-
-							item_id = 'item_' + item.key
-							//number = String((typeof item.callNumber === 'undefined') ? (counter) : (item.callNumber));
-							number = String(counter)
-	
-							citation = `[${number}: ${get_author(item.creators)} ${get_year(item.date)}]`
-							div_item = document.createElement('div')
-							div_item.setAttribute('id', item_id)
-							div_item.classList.add('item')
-							div_item.style.borderRadius = '4px';
-							div_item.style.borderStyle = 'solid';
-							div_item.style.borderWidth = '1px';
-							div_item.style.marginBottom = '2px';
-							div_item.style.padding = '2px 2px 2px 2px';
-
-							label = document.createElement('p');
-							label.style.cursor = 'pointer';
-							label.style.margin = 0;
-							label.style.backgroundColor = (item.itemType == "journalArticle") ? '#FF8888' : '#55AAFF';
-							label.innerHTML = citation;
-
-							title = document.createElement('p');
-							title.style.margin = 0;
-							title.innerHTML = item.title;
-	
-							// Generate metadata for drawio plugin
-							// \u4e00-\u9fa5 is used to match Chinese character
-							kname = get_tagname(item).replace(/[^a-zA-Z0-9/.,&:\]\[\u4e00-\u9fa5]/g, "_")
-
-							item_list[item.key] = {
-								'key': item.key,
-								'number': number, // TODO, string
-								'itemType': item.itemType,
-								'citation': citation,
-								'title': item.title
-							}
-
-							label.classList.add('btn');
-							label.setAttribute('state', 'Add');
-							label.setAttribute('value', kname);
-							mxEvent.addListener(label, 'click', (evt)=>{
-								state = evt.target.getAttribute('state')
-								value = evt.target.getAttribute('value')
-								if (state == 'Add'){
-									state = 'Remove'
-									graph.addTagsForCells(graph.getSelectionCells(), [value]);
-								}
-								else{
-									state = 'Add'
-									graph.removeTagsForCells(graph.getSelectionCells(), [value]);
-								}
-							})
-
-							div_item.append(label);
-							div_item.append(title);
-
-							/*mxEvent.addListener(div_item, 'mouseenter', (evt)=>{
-								evt.target.style.backgroundColor = '#55BB22'
-							})
-
-							mxEvent.addListener(div_item, 'mouseleave', (evt)=>{
-								evt.target.style.backgroundColor = null
-							})*/
-	
 							item.collections.forEach((ckey) => {
 								collection_id = 'collection_' + ckey
 								collection_name = collection_names[ckey]
+								// div_item needs to be re-created for each time, 
+								// otherwise, the click event will not be called.
+
+								item_id = 'item_' + item.key
+								//number = String((typeof item.callNumber === 'undefined') ? (counter) : (item.callNumber));
+								number = String(counter)
+		
+								citation = `[${number}: ${get_author(item.creators)} ${get_year(item.date)}]`
+								div_item = document.createElement('div')
+								div_item.setAttribute('id', item_id)
+								div_item.classList.add('item')
+								div_item.style.borderRadius = '4px';
+								div_item.style.borderStyle = 'solid';
+								div_item.style.borderWidth = '1px';
+								div_item.style.marginBottom = '2px';
+								div_item.style.padding = '2px 2px 2px 2px';
+
+								label = document.createElement('p');
+								label.style.cursor = 'pointer';
+								label.style.margin = 0;
+								label.style.backgroundColor = (item.itemType == "journalArticle") ? '#FF8888' : '#55AAFF';
+								label.innerHTML = citation;
+
+								title = document.createElement('p');
+								title.style.margin = 0;
+								title.innerHTML = item.title;
+		
+								// Generate metadata for drawio plugin
+								// \u4e00-\u9fa5 is used to match Chinese character
+								kname = get_tagname(item).replace(/[^a-zA-Z0-9/.,&:\]\[\u4e00-\u9fa5]/g, "_")
+
+								item_list[item.key] = {
+									'key': item.key,
+									'number': number, // TODO, string
+									'itemType': item.itemType,
+									'citation': citation,
+									'title': item.title
+								}
+
+								label.classList.add('btn');
+								label.setAttribute('state', 'Add');
+								label.setAttribute('value', kname);
+								mxEvent.addListener(label, 'click', (evt)=>{
+									state = evt.target.getAttribute('state')
+									value = evt.target.getAttribute('value')
+									if (state == 'Add'){
+										state = 'Remove'
+										console.log('add')
+										graph.addTagsForCells(graph.getSelectionCells(), [value]);
+									}
+									else{
+										state = 'Add'
+										console.log('remove')
+										graph.removeTagsForCells(graph.getSelectionCells(), [value]);
+									}
+								})
+
+								div_item.append(label);
+								div_item.append(title);
+
+								/*mxEvent.addListener(div_item, 'mouseenter', (evt)=>{
+									evt.target.style.backgroundColor = '#55BB22'
+								})
+
+								mxEvent.addListener(div_item, 'mouseleave', (evt)=>{
+									evt.target.style.backgroundColor = null
+								})*/
+	
 								// Only append items haven't shown before
-								if (root_div.querySelector(`#${collection_id}>div>#${item_id}`) == null)
+								console.log(item_id + ' into ' + collection_names[ckey] + ' , ' + collection_id + ' , ' + (root_div.querySelector(`#${collection_id}>div>#${item_id}`) == null))
+								if (root_div.querySelector(`#${collection_id}>div>#${item_id}`) == null){
 									root_div.querySelector(`#${collection_id}>div`).append(div_item)
+								}
 							})
 							counter += 1
 						}
