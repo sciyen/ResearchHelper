@@ -96,6 +96,10 @@ Draw.loadPlugin(function (ui) {
 				if (collection_list[target].build) return;
 				
 				function create_new_collection(target){
+					// Avoiding recrating collection box if the container already exists.
+					if (root_div.querySelector(`#${get_collection_id(target)}`) != null)
+						return root_div.querySelector(`#${get_collection_id(target)}`);
+
 					collection_div = document.createElement('div')
 					collection_div.style.margin = '2px 0 2px 0'
 					collection_div.style.paddingLeft = '5px'
