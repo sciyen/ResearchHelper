@@ -313,7 +313,7 @@ Draw.loadPlugin(function (ui) {
 		div.style.height = 'auto';
 
 		var InfoDiv = document.createElement('div');
-		InfoDiv.setHTML('<i class="fa fa-github"></i> <a href="https://github.com/sciyen/ResearchHelper">GitHub</a> © 2023 sciyen');
+		InfoDiv.innerHTML = '<i class="fa fa-github"></i> <a href="https://github.com/sciyen/ResearchHelper">GitHub</a> © 2023 <a href="https://github.com/sciyen">sciyen</a>';
 		InfoDiv.classList.add('title_header');
 		div.appendChild(InfoDiv);
 
@@ -327,7 +327,7 @@ Draw.loadPlugin(function (ui) {
 		UIDInput.classList.add('default_input_box');
 		UIDInput.style.width = '60%';
 		var UIDDes = document.createElement('a');
-		UIDDes.setHTML('Look up');
+		UIDDes.textContent = 'Look up';
 		UIDDes.setAttribute('href', 'https://www.zotero.org/settings/keys');
 		UIDDes.setAttribute('target', '_blank');
 		UIDDes.setAttribute('rel', 'noopener noreferrer');
@@ -341,7 +341,7 @@ Draw.loadPlugin(function (ui) {
 		APIKeyInput.classList.add('default_input_box');
 		APIKeyInput.style.width = '60%';
 		var APIKeyDes = document.createElement('a');
-		APIKeyDes.setHTML('Register');
+		APIKeyDes.textContent = 'Register';
 		APIKeyDes.setAttribute('href', 'https://www.zotero.org/settings/keys/new');
 		APIKeyDes.setAttribute('target', '_blank');
 		APIKeyDes.setAttribute('rel', 'noopener noreferrer');
