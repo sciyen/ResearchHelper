@@ -46,8 +46,33 @@ style.innerHTML = `
 }
 .item_container {
 	width: 100%;
+	background-color: white;
 	overflow: hidden;
 	padding: 12px 8px 12px 8px;
+}
+.default_btn {
+	width: 40%;
+	margin: 5px auto 5px auto;
+}
+.btn_container {
+	width: 100%;
+	background-color: white;
+	text-align: center;
+	justify-content: center;
+}
+.btn_container > button{
+	width: 40%;
+	margin: 5px;
+	border-width: 1px !important;
+	border-radius: 3px !important;
+	border-color: gray !important;
+	background: none !important;
+	float: none !important;
+	transition-duration: 0.4s;
+}
+.btn_container > button:hover{
+	background-color: #222222 !important;;
+  	color: white;
 }
 `;
 document.getElementsByTagName('head')[0].appendChild(style);
@@ -376,14 +401,20 @@ Draw.loadPlugin(function (ui) {
 		div.appendChild(UIDDiv);
 		div.appendChild(APIKeyDiv);
 		// #endregion Zotero UID and Key
+
+		var buttonsDiv = document.createElement('div');
+		buttonsDiv.classList.add('btn_container');
+
+		var updateBtn = document.createElement('button');
+		updateBtn.textContent = 'Refresh'
+		buttonsDiv.appendChild(updateBtn);
+	
+		var exportBtn = document.createElement('button');
+		exportBtn.textContent = 'Export Selections'
+		buttonsDiv.appendChild(exportBtn);
+		div.append(buttonsDiv)
 	
 		// #region Searching by Title
-		var updateBtn = document.createElement('button');
-		updateBtn.innerHTML = 'Refresh'
-		updateBtn.style.width = '40%';
-		updateBtn.style.margin = '5px auto 5px auto';
-		div.appendChild(updateBtn);
-	
 		var filterInput = document.createElement('input');
 		filterInput.setAttribute('placeholder', 'Search by Title');
 		filterInput.setAttribute('type', 'text');
@@ -474,6 +505,31 @@ Draw.loadPlugin(function (ui) {
 				}
 				localStorage.setItem('.configuration', JSON.stringify(config));
 			}
+		});
+
+		mxEvent.addListener(exportBtn, 'click', function(evt){
+			tags_list = graph.getTagsForCells(graph.getSelectionCells());
+			console.log(tags_list)
+			citation = '<div>';
+			tags_list.forEach((tag) => {
+				info = get_citation_info(tag);
+				citation += `<div>
+						<span style="margin=0; padding=0; color="red";>${item_list[info.key].citation}</span>
+						<span style="margin=0; padding=0; color="blue";>${item_list[info.key].title}</span>
+					</div>`;
+			})
+			citation += '</div>'
+
+			// copy to clipboard
+			var data = [new ClipboardItem(
+				{"text/html": Promise.resolve(
+						new Blob([citation], { type: "text/html" })) })];
+			navigator.clipboard.write(data).then(function() {
+				console.log("Copied to clipboard successfully!" + citation);
+				alert("Citation copied to clipboard!");
+			}, function() {
+				console.error("Unable to write to clipboard. :-(");
+			});
 		});
 	
 		this.window.addListener('show', mxUtils.bind(this, function(){
