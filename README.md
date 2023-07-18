@@ -3,7 +3,7 @@
 This is a plugin for [diagrams.net(drawio)](http://diagrams.net/) which retrieves library from your [Zotero](https://www.zotero.org/) personal account and organizes your references according to the collection in it. With this plugin, you can add tags for blocks with standard citation format.
 
 # The Website
-Please use [our customized drawio](https://sciyen.github.io/drawio/src/main/webapp/index.html?p=zotero.js). Third-party plugin is not allowed in the offical drawio webapp directly.
+Please use [our customized drawio](https://sciyen.github.io/drawio/src/main/webapp/index.html?p=zotero.js). Third-party plugin is not allowed in the official drawio webapp directly.
 
 ## Quick Start
 1. Add the plugin. 
@@ -18,14 +18,16 @@ Please use [our customized drawio](https://sciyen.github.io/drawio/src/main/weba
         ```-->
         and click `Add`. Finally, apply the change and **refresh the site**.  
     ![](https://i.imgur.com/WZKridU.png)
-2. Click `Extras > Zotero Tag Selector...` to open tag selector.
-3. Enter the personal account information to diagrams.net.
+2. Click `Extras > Zotero Tag Selector...` to open the tag selector.
+3. (Optional) If you are working on writing a thesis using Latex, you can upload the bibliography meta file (`.bbl`) of your project. 
+It will try to match the citation number in your thesis by matching the DOI of an item. 
+4. Enter the personal account information to diagrams.net.
     - Register a private API key from [here](https://www.zotero.org/settings/keys/new).
     - Lookup for your userID from [here](https://www.zotero.org/settings/keys) (login first).
     - Enter the UID and keys, and click `Refresh` button.
         ![](https://i.imgur.com/7IrpZmx.png)
-6. Select a block in your diagram, and add a tag by clicking `Add` button or remove a tag by clicking `Remove`.
-7. And you should see the attached block with standard citation format. The red color indicates a journal paper; the blue one indicates a conference paper.
+5. Select a block in your diagram, and add a tag by clicking `Add` button or remove a tag by clicking `Remove`.
+6. And you should see the attached block with standard citation format. The red color indicates a journal paper; the blue one indicates a conference paper.
     ![](https://i.imgur.com/RyzVzqi.png)
 
 ## Steps to Load Plugin in Official App Website (Alternative)
@@ -58,7 +60,8 @@ We are currently working on following subjects. Feel free to join us.
 [this chrome extension](https://chrome.google.com/webstore/detail/disable-content-security/ieelmcmcagommplceebfedjlakkhpden/) allow you to add plugins from arbitary sources. Thus, you can debug in local without pushing it, which have been tested in windows 10 WSL 1.0.
 
 Since [20.3.0 release](https://github.com/jgraph/drawio/commit/b5dfeb238369d664fb06a95e2179236b0e75f366), one need to force the external plugin from different domain available by the following steps. 
-1. Press F12 to open the dev tools, go to the Source tab, and open the file `top/app.diagrams.net/index.html`. Click the space left to the line number to add breakpoint at the beginning.
+1. Use vscode to open this project. Open `/publics/index.html`, right click `Open in Default Browser` at any line. Then, you obtain a local file server, e.g. `http://localhost:52330/plugins/zotero.js`. You can use this link as an experimental plugin. (In drawio, click `Extra`>`Plugins`>`Add`>`Custom`, and paste the url.)
+2. Press F12 to open the dev tools, go to the Source tab, and open the file `top/app.diagrams.net/index.html`. Click the space left to the line number to add breakpoint at the beginning.
 2. Turn on the disable-content-security extension to disable CSR protection.
 3. Refresh the page. You should notice that the page halts during loading.
 4. Find `App.isSameDomain(l[t])` and change it to `1||App.isSameDomain(l[t])` and press `ctrl+s` to save.

@@ -12,6 +12,7 @@ document.head.appendChild(style);
 var zoteroApi; // will be set after load
 const str_token = '::';
 var item_list = {};
+var doi_list = {};
 
 var style = document.createElement('style');
 style.type = 'text/css';
@@ -266,9 +267,18 @@ Draw.loadPlugin(function (ui) {
 								// div_item needs to be re-created for each time, 
 								// otherwise, the click event will not be called.
 
+								// extract doi
+								// Using regular expression to extract doi from the EXTRA field
+								var regex_doi = /DOI: (?<doi>[0-9.\/\-\_]+)/;
+								extra_field = regex_doi.exec(item.extra);
+								doi = ("DOI" in item) ? item.DOI : (extra_field ? extra_field.groups.doi : "");
+
 								item_id = get_item_id(item.key)
 								//number = String((typeof item.callNumber === 'undefined') ? (counter) : (item.callNumber));
-								number = String(counter)
+								
+								number = (Object.keys(doi_list).length > 0) ? 
+									((doi in doi_list) ? doi_list[doi].number : "") : 
+									String(counter)
 		
 								citation = `[${number}: ${get_author(item.creators)} ${get_year(item.date)}]`
 								div_item = document.createElement('div')
@@ -300,7 +310,8 @@ Draw.loadPlugin(function (ui) {
 									'number': number, // TODO, string
 									'itemType': item.itemType,
 									'citation': citation,
-									'title': item.title
+									'title': item.title,
+									'doi': doi,
 								}
 
 								label.classList.add('btn');
@@ -401,6 +412,10 @@ Draw.loadPlugin(function (ui) {
 		div.appendChild(UIDDiv);
 		div.appendChild(APIKeyDiv);
 		// #endregion Zotero UID and Key
+
+		var bblDiv = document.createElement('div');
+		bblDiv.innerHTML = '<form id="bbl_form"> <label for="bbl_file">bbl file: </label> <input id="bbl_file" name="bbl_file" type="file" accept=".bbl"/></form>'
+		div.append(bblDiv)
 
 		var buttonsDiv = document.createElement('div');
 		buttonsDiv.classList.add('btn_container');
@@ -530,6 +545,57 @@ Draw.loadPlugin(function (ui) {
 			}, function() {
 				console.error("Unable to write to clipboard. :-(");
 			});
+		});
+
+		const bbl_input = document.querySelector('#bbl_form input');
+		mxEvent.addListener(bbl_input, 'change', function(evt){
+			if (document.querySelector('#bbl_form input').files.length > 0){
+				let file = document.querySelector('#bbl_form input').files[0];
+				const reader = new FileReader();
+				reader.addEventListener('load', (event) => {
+					/*
+					 * Extracting entries from a bbl file, which has the following format
+					 * \entry{citationky}
+					 * 		something not important
+					 * 		\verb{doi}
+					 * 		\verb some-doi-hash
+					 * \endentry
+					 * 
+					 * The following regex tries to find the entry and the doi
+					 */
+					const key_extraction = /\\entry\{(?<citation_key>[A-Za-z0-9._]+)\}/;
+					const doi_extraction = /\\verb\{doi\}[\r\n]*\s*\\verb\s(?<doi>[A-Za-z0-9\.\/\-\\\_]+)[\r\n]*/;
+	
+					event.target.result.split(/\\endentry/).forEach((section, idx) =>{
+						new_number = idx + 1;
+						key_match = section.match(key_extraction);
+						doi_match = section.match(doi_extraction);
+						if ((key_match !== null) && (doi_match !== null)){
+							citekey = key_match.groups.citation_key;
+							doi = doi_match.groups.doi;
+							console.log(idx + ", " + citekey + ", " + doi)
+	
+							// update item_list
+							if (Object.keys(item_list).length > 0){
+								for (const [key, item] of Object.entries(item_list)){
+									if (item.doi == doi){
+										item_list[key].number = new_number;
+										// Update citation number
+										item_list[key].citation = item_list[key].citation.replace(/[0-9]+:/, String(new_number) + ":");
+									}
+								}
+							}
+	
+							doi_list[doi] = {
+								'number': new_number
+							}
+						}
+						refresh_ui();
+					})
+				});
+				txt = reader.readAsText(file);
+				evt.preventDefault();
+			}
 		});
 	
 		this.window.addListener('show', mxUtils.bind(this, function(){
