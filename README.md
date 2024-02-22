@@ -30,6 +30,20 @@ It will try to match the citation number in your thesis by matching the DOI of a
 6. And you should see the attached block with standard citation format. The red indicates a journal paper; the blue indicates a conference paper.
     ![](https://i.imgur.com/RyzVzqi.png)
 
+## Exporting PDFs
+To export pdfs according to the bibliography in your Latex project, you can use the following steps.
+1. Click `Extras > Zotero Tag Selector...` to open the tag selector.
+2. Click `Export CSV` button to download the csv file, which contains the item key, proper citation format, and item title.
+3. Excute the script to copy PDF files.
+    ```bash
+    python3 export_pdf.py <csv_path> <lib_json_path> <zotero_storage_path> [--output_folder=<output_folder>]
+    ```
+    Replace 
+    - `<csv_path>` with the path of the csv file just downloaded
+    - `<lib_json_path>` is the better biblatex library json file exported from Zotero, which can be obtained by clicking `Export Library` in the Zotero. Remember to select the `BetterBibTex JSON` format.
+    - `<zotero_storage_path>` is the path of the storage folder of your Zotero. You can find it by right clicking any item in the Zotero and click `Show File`. The folder should be the parent folder of the file.
+
+
 ## Steps to Load Plugin in Official App Website (Alternative)
 ### Content-Security-Policy
 For developing usage, you can install this [chrome extension](https://chrome.google.com/webstore/detail/disable-content-security/ieelmcmcagommplceebfedjlakkhpden/) to disable Content-Security-Policy for a web application. And you can use our plugin on the official web app. Additional approval is required after the reloading of the page. Please re-authorize it by clicking the `Disable Content-Security` button.
