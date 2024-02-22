@@ -31,6 +31,11 @@ It will try to match the citation number in your thesis by matching the DOI of a
     ![](https://i.imgur.com/RyzVzqi.png)
 
 ## Exporting PDFs
+You need to install `wkhtmltopdf`, see the instruction [here](https://github.com/JazzCore/python-pdfkit/wiki/Installing-wkhtmltopdf).
+```bash
+sudo apt-get install wkhtmltopdf
+pip install pdfkit
+```
 To export pdfs according to the bibliography in your Latex project, you can use the following steps.
 1. Click `Extras > Zotero Tag Selector...` to open the tag selector.
 2. Click `Export CSV` button to download the csv file, which contains the item key, proper citation format, and item title.
