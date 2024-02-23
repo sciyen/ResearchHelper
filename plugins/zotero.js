@@ -62,7 +62,7 @@ style.innerHTML = `
 	justify-content: center;
 }
 .btn_container > button{
-	width: 40%;
+	width: 25%;
 	margin: 5px;
 	border-width: 1px !important;
 	border-radius: 3px !important;
@@ -312,6 +312,8 @@ Draw.loadPlugin(function (ui) {
 									'citation': citation,
 									'title': item.title,
 									'doi': doi,
+									'creators': item.creators,
+									'year': get_year(item.date),
 								}
 
 								label.classList.add('btn');
@@ -427,6 +429,10 @@ Draw.loadPlugin(function (ui) {
 		var exportBtn = document.createElement('button');
 		exportBtn.textContent = 'Export Selections'
 		buttonsDiv.appendChild(exportBtn);
+		
+		var exportCsvBtn = document.createElement('button');
+		exportCsvBtn.textContent = 'Export CSV'
+		buttonsDiv.appendChild(exportCsvBtn);
 		div.append(buttonsDiv)
 	
 		// #region Searching by Title
@@ -545,6 +551,26 @@ Draw.loadPlugin(function (ui) {
 			}, function() {
 				console.error("Unable to write to clipboard. :-(");
 			});
+		});
+		
+		// Export CSV if the item number presents
+		mxEvent.addListener(exportCsvBtn, 'click', function(evt){
+			const item_array = Object.values(item_list);
+			const objs = item_array.filter((item) => item.number != "").sort((a, b) => (a.number > b.number) ? 1 : -1);
+			let csvContent = 'Number, Citation, Key, DOI, Title\n';
+			objs.forEach((item) => {
+				valid_title = item.title.replace(/[ ,\-:]/g, "_");
+				valid_title = valid_title.length > 60 ? valid_title.substring(0, 60) : valid_title;
+				valid_title = `${item.creators[0].lastName}${item.creators.length}_${item.year%100}_${valid_title}`;
+				csvContent += `${item.number}, ${item.citation}, ${item.key}, ${item.doi}, ${valid_title}\n`;
+			});
+			
+			// download csv
+			let fileName = 'keys.csv';
+			let link = document.createElement('a');
+			link.setAttribute('href', 'data:text/csv;charset=utf-8,%EF%BB%BF' + encodeURI(csvContent));
+			link.setAttribute('download', fileName);
+			link.click();
 		});
 
 		const bbl_input = document.querySelector('#bbl_form input');
