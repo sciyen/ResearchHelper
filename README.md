@@ -56,7 +56,7 @@ For developing usage, you can install this [chrome extension](https://chrome.goo
 ![](https://i.imgur.com/ArN7HQS.png)
 
 ### Loading External Plugins
-After [20.3.0 release](https://github.com/jgraph/drawio/commit/b5dfeb238369d664fb06a95e2179236b0e75f366), the author prohibited the load of third party plugin. And therefore, we need extra steps to bypass this checking. If you have a better method to deal with this, please let me know, thanks.
+After [20.3.0 release](https://github.com/jgraph/drawio/commit/b5dfeb238369d664fb06a95e2179236b0e75f366), the original author prohibited the load of third party plugin. And therefore, we need extra steps to bypass this checking. If you have a better method to deal with this, please let me know, thanks.
 1. Press `F12` to open the dev tools, go to the `Source` tab, and open the file `top/app.diagrams.net/js/app.min.js`. Click the space left to the line number to add a breakpoint at the beginning.
 2. Turn on the `disable-content-security` extension to disable CSR protection. 
 3. Refresh the page. You should notice that the page halts during loading.
@@ -75,13 +75,12 @@ We are currently working on the following subjects. Feel free to join us.
 - Enhance user interface.
 
 ## Recommended Method for Debugging
-[This vscode extension](https://marketplace.visualstudio.com/items?itemName=peakchen90.open-html-in-browser) allows you to host the files with a local server. And 
-[this chrome extension](https://chrome.google.com/webstore/detail/disable-content-security/ieelmcmcagommplceebfedjlakkhpden/) allows you to add plugins from arbitrary sources. So, you can just debug locally without pushing it, which has been tested in Windows 10 WSL 1.0.
+### Preparing the Environment
+- [This vscode extension](https://marketplace.visualstudio.com/items?itemName=peakchen90.open-html-in-browser) allows you to host the files with a local server. 
+- Since [20.3.0 release](https://github.com/jgraph/drawio/commit/b5dfeb238369d664fb06a95e2179236b0e75f366), one needs to force the external plugin from different domain available by the following steps. [This chrome extension](https://chrome.google.com/webstore/detail/disable-content-security/ieelmcmcagommplceebfedjlakkhpden/) allows you to add plugins from arbitrary sources. So, you can just debug locally without pushing it, which has been tested in Windows 10 WSL 1.0.
 
-Since [20.3.0 release](https://github.com/jgraph/drawio/commit/b5dfeb238369d664fb06a95e2179236b0e75f366), one needs to force the external plugin from different domain available by the following steps. 
-1. Use vscode to open this project. Open `/publics/index.html`, right click `Open in Default Browser` at any line. Then, you obtain a local file server, e.g. `http://localhost:52330/plugins/zotero.js`. You can use this link as an experimental plugin. (In drawio, click `Extra`>`Plugins`>`Add`>`Custom`, and paste the url.)
-2. Press F12 to open the dev tools, go to the Source tab, and open the file `top/app.diagrams.net/index.html`. Click the space left to the line number to add a breakpoint at the beginning.
-2. Turn on the disable-content-security extension to disable CSR protection.
-3. Refresh the page. You should notice that the page halts during loading.
-4. Find `App.isSameDomain(l[t])` and change it to `1||App.isSameDomain(l[t])` and press `ctrl+s` to save.
-5. Resume the breakpoint.
+### Use Our Customized Drawio
+1. Our [our customized drawio](https://sciyen.github.io/drawio/src/main/webapp/index.html?p=zotero.js) does not have the restriction of loading external plugins. It is recommended to use this version for debugging.
+2. Use vscode to open this project. Open `/publics/index.html`, right click `Open in Default Browser` at any line. Then, you obtain a local file server, e.g. `http://localhost:52330/plugins/zotero.js`. 
+3. Use this link as an experimental plugin. In drawio, click `Extra`>`Plugins`>`Add`>`Custom`, and paste the url.
+4. Turn on the disable-content-security extension to disable CSR protection, and refresh the page. Now, the plugin should be loaded successfully.
