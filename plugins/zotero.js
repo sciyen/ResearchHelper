@@ -61,8 +61,7 @@ style.innerHTML = `
 	text-align: center;
 	justify-content: center;
 }
-.btn_container > button{
-	width: 25%;
+.btn_container button {
 	margin: 5px;
 	border-width: 1px !important;
 	border-radius: 3px !important;
@@ -159,11 +158,50 @@ Draw.loadPlugin(function (ui) {
 		})
 	}
 
-	/* Retrieve library from Zotero API */
-	async function retreive_draw(ApiKey, Uid, callback) {
+	/* Retrieve groups from Zotero API */
+	async function retrieve_groups(ApiKey, Uid, callback) {
 		const myapi = zoteroApi(ApiKey, {
 			'limit': 100
 		}).library('user', Uid)
+
+		try {
+			const groupsRes = await myapi.groups().get();
+			console.log(groupsRes)
+			for (const [i, g] of groupsRes.raw.entries()) {
+				console.log(g)
+				if (g.data.libraryEditing) {
+					console.log(g.data.name)
+					// Add group to the selection
+					group_select = document.getElementById('group-selection')
+					option = document.createElement('option')
+					option.value = g.data.id
+					option.text = g.data.name
+					group_select.add(option)
+				}
+			}
+		}
+		catch (err) {
+			console.log(err)
+			alert("Error: " + String(err) + '\nPlease check the UID and API key!')
+		}
+		callback()
+	}
+
+	/* Retrieve library from Zotero API */
+	async function retreive_draw(ApiKey, Uid, callback) {
+		// Determine which library to load
+		// Get group selection
+		group_select = document.getElementById('group-selection')
+		lib_type = 'group'
+		group_id = group_select.options[group_select.selectedIndex].value
+		if (group_id == 'default'){
+			lib_type = 'user'
+			group_id = Uid
+		}
+
+		const myapi = zoteroApi(ApiKey, {
+			'limit': 100
+		}).library(lib_type, group_id)
 	
 		try {
 			const collectionsRes = await myapi.collections().get();
@@ -421,18 +459,42 @@ Draw.loadPlugin(function (ui) {
 
 		var buttonsDiv = document.createElement('div');
 		buttonsDiv.classList.add('btn_container');
+		
+		// #region Group selection
+		var listGroupBtn = document.createElement('button');
+		listGroupBtn.textContent = 'List Groups'
 
+		var groupSelectInput = document.createElement('div');
+		groupSelectInput.innerHTML = `
+			<label for="group-selection">Select a group: </label>
+			<select id="group-selection" name="group-selection">
+				<option value="default" selected>My Library</option>
+			</select>`;
+		groupSelectInput.insertBefore(listGroupBtn, groupSelectInput.firstChild);
+		
+		// Refresh button
 		var updateBtn = document.createElement('button');
-		updateBtn.textContent = 'Refresh'
-		buttonsDiv.appendChild(updateBtn);
+		updateBtn.textContent = 'Go'
+		groupSelectInput.appendChild(updateBtn);
+
+		buttonsDiv.appendChild(groupSelectInput);
+		// #endregion Group selection
 	
+		// #region Export Div
+		var exportDiv = document.createElement('div');
+		exportDiv.innerHTML = '<span>Export Tools: </span>'
+		// Export button
 		var exportBtn = document.createElement('button');
 		exportBtn.textContent = 'Export Selections'
-		buttonsDiv.appendChild(exportBtn);
+		exportDiv.appendChild(exportBtn);
 		
+		// Export CSV button
 		var exportCsvBtn = document.createElement('button');
 		exportCsvBtn.textContent = 'Export CSV'
-		buttonsDiv.appendChild(exportCsvBtn);
+		exportDiv.appendChild(exportCsvBtn);
+		buttonsDiv.appendChild(exportDiv);
+		// #endregion Export Div
+
 		div.append(buttonsDiv)
 	
 		// #region Searching by Title
@@ -500,6 +562,24 @@ Draw.loadPlugin(function (ui) {
 			}
 
 			search_in_items(keyword);
+		});
+
+		mxEvent.addListener(listGroupBtn, 'click', function(evt){
+			evt.target.setAttribute('disabled', 'disabled')
+
+			// clear the group-selection options except the default one
+			group_select = document.getElementById('group-selection')
+			while (group_select.options.length > 1) {
+				group_select.remove(1);
+			}
+
+			// load from Zotero Api and add them to the list of tags (tags for the root)
+			zotero_uid = parseInt(div.querySelector('#zotero_uid').value, 10); //config['zotero_uid'];
+			zotero_api_key = div.querySelector('#zotero_key').value; //config['zotero_api_key'];
+			
+			retrieve_groups(zotero_api_key, zotero_uid, () => {
+				evt.target.removeAttribute('disabled')
+			});
 		});
 	
 		mxEvent.addListener(updateBtn, 'click', function(evt){
